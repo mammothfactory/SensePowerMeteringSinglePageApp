@@ -4,7 +4,7 @@ __authors__    = ["Blaze Sanders"]
  __contact__   = "blazes@mfc.us"
 __copyright__  = "Copyright 2023"
 __license__    = "MIT License"
-__status__     = "Development
+__status__     = "Development"
 __deprecated__ = False
 __version__    = "0.0.1"
 __doc__        = "Simple PWA to display the cost of the electrical power measured by the Sense Flex product"
@@ -33,8 +33,8 @@ import UserInterface
 
 app = FastAPI()
 totalEnergy = 0                     # Units are kWh
-sanitizedID = ''                    # 
-validEmployeeID = ''
+sanitizedInput = ''                 # Default string variable used to search for data
+validDate = '2023-12-30T13:45:42'   # Valid datetime object in the  ISO-?? format. Called usin .isoformet() TODO
 canUpdateweeklyReportTable = True
 
 
@@ -59,8 +59,8 @@ def generate_report(db):
     if dayOfWeek == GC.MONDAY and (ELEVEN_PM < currentTime and currentTime < THREE_AM):
         canUpdateweeklyReportTable = True
         db.export_table_to_csv(["WeeklyReportTable", "CheckInTable", "CheckOutTable"])
- 
-   
+
+
 def sync():
     """ Force Syncthing systemd daemon restart
         https://www.youtube.com/watch?v=g-FZCIF0HJw
@@ -70,9 +70,9 @@ def sync():
 
 if __name__ in {"__main__", "__mp_main__"}:
     #UserInterface.init(app)
-    
+
     db = Database()
-    db.setup_users()
+    db.setup_tables()
     #command = ['python3', 'pagekite.py', f'{GC.LOCAL_HOST_PORT_FOR_GUI}', 'timetracker.pagekite.me']
 
     ui.timer(GC.LABEL_UPDATE_TIME, lambda: clockedInLabel.set_visibility(False))

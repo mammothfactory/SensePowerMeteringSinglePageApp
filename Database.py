@@ -4,7 +4,7 @@ __authors__    = ["Blaze Sanders"]
 __contact__    = "blazes@mfc.us"
 __copyright__  = "Copyright 2023"
 __license__    = "MIT License"
-__status__     = "Development
+__status__     = "Development"
 __deprecated__ = False
 __version__    = "0.1.0"
 """
@@ -15,31 +15,29 @@ __version__    = "0.1.0"
 # pylint: disable=invalid-name
 
 # Standard Python libraries
-import sqlite3
-	
+import sqlite3                                  # SQlite Database
 from datetime import datetime, time, timedelta 	# Manipulate calendar dates & time objects https://docs.python.org/3/library/datetime.html
-from time import sleep
-import pytz 					                # World Timezone Definitions  https://pypi.org/project/pytz/
+from time import sleep                          # Pause program execution
+import os                                       # Get filename information like directoty and file path
+import csv                                      # Manipulate .CSV files for data reporting
 
-import os
-import csv
+# 3rd Party Libraries
+import pytz 					                # World Timezone Definitions  https://pypi.org/project/pytz/
 
 # Internal modules
 import GlobalConstants as GC
 
-ELEVEN_PM = time(23, 0, 0)
-THREE_AM  = time(3, 0, 0)
 
 class Database:
-    
+
     DEBUGGING = True
-    
+
     """ Store non-Personally Identifiable Information in SQLite database
     """
 
     def __init__(self, pollingRate: int=0.0166666666):
         """ Constructor to initialize an Database object
-        
+
         Args:
             pollingRate (int): Frequency (in Hz) to collect data for the DailyEnergyTable SQlite database. Defaults to 1/60 Hz = 1 time per minute
         """
@@ -47,52 +45,78 @@ class Database:
         self.conn = sqlite3.connect('EnergyReport.db')
         self.cursor = self.conn.cursor()
         self.pollingRate = pollingRate     # In units of Hz
-        
-        # Create four tables in EnergyReport.db for user name and time logging data storage
+
+        # Create six tables in EnergyReport.db for collecting energy data
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS DailyEnergyTable   (id INTEGER PRIMARY KEY, instantWattage INTEGER, currentCostPerWh INTEGER, timestamp TEXT)''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS WeeklyEnergyTable  (id INTEGER PRIMARY KEY, totalDailyWattHours INTEGER, currentCostPerWh INTEGER, timestamp TEXT)''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS MonthlyEnergyTable (id INTEGER PRIMARY KEY, totalWeeklyWattHours INTEGER, currentCostPerWh INTEGER, timestamp TEXT)''')
-        
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS WeekGraphTable     (id INTEGER PRIMARY KEY, wattHours INTEGER, weekNumber TEXT)''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS MonthGraphTable    (id INTEGER PRIMARY KEY, wattHours INTEGER, monthNumber TEXT)''')
+
         # Create debuging logg
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS DebugLoggingTable (id INTEGER PRIMARY KEY, logMessage TEXT)''')
-        
+
         # Commit the five tables to database
         self.conn.commit()
-        
-    
-    def setup_tables(self):
-        """ Define the 1440 (60 * 24) data points needed for a 1/60 Hz polling rate of DailyEnergyTable 
+
+
+    def setup_graph_tables(self):
+        """ Prepopulate WeekGraphTable and MonthGraphTable with 52 and 12 row for quick update as needed
+
+        """
+        # Each year has 52 weeks
+        for weekNumber in range(1, 53):
+            self.insert_week_graph_table(0, weekNumber)
+
+        # Each year has 12 months
+        for monthNumber in range(1, 12):
+            self.insert_month_graph_table(0, monthNumber)
+
+
+    def example_tables(self):
+        """ As define by a 1/60 Hz polling rate of DailyEnergyTable, once every 24 hours polling rate for WeeklyEnergyTable, and once per week polling rate for MonthlyEnergyTable
         """
         self.insert_daily_energy_table(200, 0.11, "2024-01-01T00:00:00")
         self.insert_daily_energy_table(220, 0.11, "2024-01-01T23:59:00")
-        
+
         self.insert_weekly_energy_table(4800, 0.11, "2024-01-01T12:00:00")
         self.insert_weekly_energy_table(5280, 0.11, "2024-01-02T12:00:00")
         self.insert_weekly_energy_table(4800, 0.11, "2024-01-03T12:00:00")
-        self.insert_weekly_energy_table(5280, 0.11, "2024-01-04T12:00:00")    
+        self.insert_weekly_energy_table(5280, 0.11, "2024-01-04T12:00:00")
         self.insert_weekly_energy_table(4800, 0.11, "2024-01-05T12:00:00")
         self.insert_weekly_energy_table(5280, 0.11, "2024-01-06T12:00:00")
         self.insert_weekly_energy_table(4800, 0.11, "2024-01-07T12:00:00")
-        
+
         self.insert_monthly_energy_table(33360, 0.11, "2024-01-07T23:59:00")
         self.insert_monthly_energy_table(36960, 0.11, "2024-01-14T23:59:00")
         self.insert_monthly_energy_table(33360, 0.11, "2024-01-21T23:59:00")
         self.insert_monthly_energy_table(36960, 0.11, "2024-01-28T23:59:00")
-        
-        
-    def setup_weekly_report(self):
-        
-        zero = 0
-        users = db.query_table("UsersTable")
-        
-        for data in users:
-            employeeID = data[GC.EMPLOYEE_ID_COLUMN_NUMBER]
-            name = data[GC.FIRST_NAME_COLUMN_NUMBER] + " " + data[GC.LAST_NAME_COLUMN_NUMBER]
-            self.cursor.execute("INSERT INTO WeeklyReportTable (fullname, employeeId, totalHours, day6, day0, day1, day2, day3, day4, day5, inComments, outComments) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (name, employeeID, zero, zero, zero, zero, zero, zero, zero, zero, "Missed: ", "Missed:"))
 
-  
+
+    def update_graph_table(self, startDate: str, timeFrame: str = GC.WEEKLY):
+
+        zero = 0
+
+        result = # TODO
+        dateToCalulate = startDate.isoformat(timespec="minutes")[0:10]
+        finalResult = list(filter(lambda t: t[GC.TIMESTAMP_COLUMN_NUMBER].startswith(dateToCalulate), result))
+
+        if timeFrame == GC.WEEKLY:
+            self.cursor.execute("UPDATE WeeklyGraphTable SET wattHours = ?, weekNumber = ? WHERE id = ?", (id, wattHours, ?))
+        elif timeFrame == GC.MONTHLY:
+            pass
+        else:
+            print("ERROR")
+#        users = db.query_table("UsersTable")
+#
+#        for data in users:
+#            employeeID = data[GC.EMPLOYEE_ID_COLUMN_NUMBER]
+#            name = data[GC.FIRST_NAME_COLUMN_NUMBER] + " " + data[GC.LAST_NAME_COLUMN_NUMBER]
+#            self.cursor.execute("INSERT INTO WeeklyReportTable (fullname, employeeId, totalHours, day6, day0, day1, day2, day3, day4, day5, inComments, outComments) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (name, employeeID, zero, zero, zero, zero, zero, zero, zero, zero, "Missed: ", "Missed:"))
+
+
     def commit_changes(self):
-        """ Commit data inserted into a table to the *.db database file 
+        """ Commit data inserted into a table to the *.db database file
         """
         self.conn.commit()
 
@@ -107,7 +131,7 @@ class Database:
         """ Get date and time in Marianna, FL timezone, independent of location on server running code
 
         Returns:
-            Datetime: 
+            Datetime:
         """
         tz = pytz.timezone('America/Chicago')
         zulu = pytz.timezone('UTC')
@@ -118,9 +142,9 @@ class Database:
 
         else:
             now = datetime.now(zulu) - timedelta(hours=5)
-            #print('Daylight Savings')   
-            
-        return now 
+            #print('Daylight Savings')
+
+        return now
 
 
     def query_table(self, tableName: str):
@@ -138,11 +162,26 @@ class Database:
         result = self.cursor.fetchall()
 
         return result
-    
-    
+
+    def insert_daily_energy_table(energy: int, cost: float, datetime: str) -> int:
+        pass
+
+        return databaseIndexInserted
+
+
+    def insert_weekly_energy_table(energy: int, cost: float, datetime: str) -> int:
+        pass
+        return databaseIndexInserted
+
+
+    def insert_monthly_energy_table(energy: int, cost: float, datetime: str) -> int:
+        pass
+        return databaseIndexInserted
+
+
     def insert_users_table(self, id: int, first: str, last: str):
         """ Insert employee ID, first name, and last name first initial into the User Table if employee ID is unqiue, otherwise update name
-        
+
         Args:
             id (int): Employee ID (from 1 to 9999) linked to internal email (e.g. 9000@mammothfactory.co)
             first (str): Full first name (or nickname) of employee
@@ -158,7 +197,7 @@ class Database:
 
         self.commit_changes()
 
-    
+
     def insert_check_in_table(self, id: int) -> tuple:
         """ Insert date and time (to current mintue) into CheckInTable of database
             https://en.wikipedia.org/wiki/ISO_8601
@@ -172,11 +211,11 @@ class Database:
 
         isoString = '?'
         currentDateTime = self.get_date_time().isoformat(timespec="minutes")
-        
+
         try:
             storedIsoString = result[0][GC.TIMESTAMP_COLUMN_NUMBER]
             if GC.DEBUG_STATEMENTS_ON:  print(f'ISO DateTime: {storedIsoString}')
-        
+
         except IndexError:
             if GC.DEBUG_STATEMENTS_ON: print(f'INSERTING {id} since this employee ID has NOT clocked IN TODAY')
             self.cursor.execute("INSERT INTO CheckInTable (employeeId, timestamp) VALUES (?, ?)", (id, currentDateTime))
@@ -207,11 +246,11 @@ class Database:
 
         isoString = '?'
         currentDateTime = self.get_date_time().isoformat(timespec="minutes")
-        
+
         try:
             storedIsoString = result[0][GC.TIMESTAMP_COLUMN_NUMBER]
             if GC.DEBUG_STATEMENTS_ON:  print(f'ISO DateTime: {storedIsoString}')
-            
+
         except IndexError:
             if GC.DEBUG_STATEMENTS_ON: print(f'INSERTING {id} since this employee ID has NOT clocked OUT TODAY')
             self.cursor.execute("INSERT INTO CheckOutTable (employeeId, timestamp) VALUES (?, ?)", (id, currentDateTime))
@@ -230,14 +269,14 @@ class Database:
 
 
     def insert_debug_logging_table(self, debugText: str):
-        """ 
+        """ Insert debugging text in database for later review
 
         Args:
-            debugText (str): ERROR: or WARNING: text message to log 
+            debugText (str): "ERROR: " or "WARNING:" + text message to log
         """
         self.cursor.execute("INSERT INTO DebugLoggingTable (logMessage) VALUES (?)", (debugText,))
         self.commit_changes()
-        
+
 
     def search_users_table(self, searchTerm: str):
         """ Search UsersTable table for every occurrence of a string
@@ -252,6 +291,7 @@ class Database:
         results = self.cursor.fetchall()
 
         return results
+
 
     # NO CURRENTLY USED!!! See ManualTImeCalculations.py to see now .csv report are generated
     def insert_weekly_report_table(self, id: int, date: datetime):
@@ -331,23 +371,17 @@ class Database:
         finally:
             self.commit_changes()
 
-    
-    def calculate_time_delta(self, id: int, date: datetime) -> float:
-        """ Calculate hours an employee ID worked on a specific date
 
-            Default to 0 hours if employee forgets to both clock IN and clock OUT, otherwise default to 12 hours if employee only performs one on the actions  
+    def calculate_daily_total_wattHour(self, date: datetime) -> int:
+        """ Calculate total amount of energy (wH) used on a specific date
 
         Args:
-            id (int): Employee ID
             dateToCalulate (datetime): ISO-8601 date (e.g. "2023-08-22")
 
         Returns:
-            float: Decimals hours between check in and check out time for a specific employee ID on a specific date
+            int: Total energy (wH) used
         """
-        clockedIn = True
-        clockedOut = True
-        
-        data = self.query_table("CheckInTable")
+        data = self.query_table("DailyEnergyTable")
         result = list(filter(lambda t: t[GC.EMPLOYEE_ID_COLUMN_NUMBER] == id, data))
         dateToCalulate = date.isoformat(timespec="minutes")[0:10]
         finalResult = list(filter(lambda t: t[GC.TIMESTAMP_COLUMN_NUMBER].startswith(dateToCalulate), result))
@@ -387,8 +421,8 @@ class Database:
                 elaspedHours = elaspedSeconds / 3600.0
 
         return elaspedHours
-    
-    
+
+
     def export_table_to_csv(self, tableNames: list):
         """ Creates a filename assuming that the date that this code runs is a Monday
 
@@ -399,33 +433,33 @@ class Database:
 
             # Fetch data from the table
             data = self.query_table(table)
-            
+
             if len(data) == 0:
                 self.insert_debug_logging_table(f'No table named {table} when converting table to CSV in Database.export_table_to_csv() function at {self.get_date_time()}')
-                
+
             else:
                 # Create a .csv filename base on (Monday - 8 days) to (Monday - 2 days) to create for example 2023-08-01_2023-08-07_LaborerTimeReport
                 lastSunday = (self.get_date_time() - timedelta(days=8)).isoformat(timespec="minutes")[0:10]
                 lastSaturday = (self.get_date_time() - timedelta(days=2)).isoformat(timespec="minutes")[0:10]
-                
+
                 currentDirectory = os.getcwd()
                 nextDirectory = os.path.join(currentDirectory, 'TimeCardReports')
                 if not os.path.exists(nextDirectory):
                     os.makedirs(nextDirectory)
-                
+
                 if table == "WeeklyReportTable":
                     columnNames = ["Full Name", "Employee ID", "Total Hours", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Check In Comments", "Check Out Comments"]
                     outputFilename = lastSunday + "_" + lastSaturday  + "_LaborerTimeReport.csv"  
                     filePath = os.path.join(nextDirectory, outputFilename)
-                    
+
                     with open(filePath, 'w', newline='') as csvfile:
                         csv_writer = csv.writer(csvfile)
                         csv_writer.writerow(columnNames[0:12])
                         for row in data:
                             csv_writer.writerow(row[1:])
-                            
+
                     csvfile.close()
-                    
+
                 elif table == "CheckInTable":
                     columnNames = ["Full Name", "Employee ID", "Clock IN Timestamp"]
                     outputFilename = lastSunday + "_" + lastSaturday  + "_ClockInTimes.csv"
@@ -436,25 +470,25 @@ class Database:
                         csv_writer.writerow(columnNames[0:4])
                         for row in data:
                             csv_writer.writerow(row[1:])
-                            
+
                     csvfile.close()
-                        
+
                 elif table == "CheckOutTable":
                     columnNames = ["Full Name", "Employee ID", "Clock OUT Timestamp"]
                     outputFilename = lastSunday + "_" + lastSaturday  + "_ClockOutTimes.csv" 
                     filePath = os.path.join(nextDirectory, outputFilename)
-                    
+
                     with open(filePath, 'w', newline='') as csvfile:
                         csv_writer = csv.writer(csvfile)
                         csv_writer.writerow(columnNames[0:4])
                         for row in data:
                             csv_writer.writerow(row[1:])
-                            
+
                     csvfile.close()
-                
+
                 else:
                     print(f'Table Name {table} conversion not implemented')
-                 
+
     def is_date_between(startDatetimeObj, endDatetimeObj, dateToCheck) -> bool:
         return startDatetimeObj <= dateToCheck <= endDatetimeObj
 
