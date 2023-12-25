@@ -31,6 +31,8 @@ import GlobalConstants as GC
 class Database:
 
     DEBUGGING = True
+    WEEKLY = "WEEKLY"
+    MONTHLY = "MONTHLY"
 
     """ Store non-Personally Identifiable Information in SQLite database
     """
@@ -93,17 +95,19 @@ class Database:
         self.insert_monthly_energy_table(36960, 0.11, "2024-01-28T23:59:00")
 
 
-    def update_graph_table(self, startDate: str, timeFrame: str = GC.WEEKLY):
+    def update_graph_table(self, startDate: str, timeFrame: str = WEEKLY):
 
         zero = 0
 
-        result = # TODO
+        result = -1 # TODO
         dateToCalulate = startDate.isoformat(timespec="minutes")[0:10]
         finalResult = list(filter(lambda t: t[GC.TIMESTAMP_COLUMN_NUMBER].startswith(dateToCalulate), result))
 
-        if timeFrame == GC.WEEKLY:
-            self.cursor.execute("UPDATE WeeklyGraphTable SET wattHours = ?, weekNumber = ? WHERE id = ?", (id, wattHours, ?))
-        elif timeFrame == GC.MONTHLY:
+        if timeFrame == Database.WEEKLY:
+            calculatedWeekNumber = 1 # TODO DATETIME MAGIC
+            calculatedWattHours = 1  # TODO SUM finalResult data
+            self.cursor.execute("UPDATE WeeklyGraphTable SET wattHours = ?, weekNumber = ? WHERE id = ?", (id, calculatedWattHours, calculatedWeekNumber))
+        elif timeFrame == Database.MONTHLY:
             pass
         else:
             print("ERROR")
@@ -163,19 +167,21 @@ class Database:
 
         return result
 
-    def insert_daily_energy_table(energy: int, cost: float, datetime: str) -> int:
-        pass
+    def insert_daily_energy_table(self, energy: int, cost: float, datetime: str) -> int:
+        databaseIndexInserted = -1 #TODO
 
         return databaseIndexInserted
 
 
-    def insert_weekly_energy_table(energy: int, cost: float, datetime: str) -> int:
-        pass
+    def insert_weekly_energy_table(self, energy: int, cost: float, datetime: str) -> int:
+        databaseIndexInserted = -1 #TODO
+        
         return databaseIndexInserted
 
 
-    def insert_monthly_energy_table(energy: int, cost: float, datetime: str) -> int:
-        pass
+    def insert_monthly_energy_table(self, energy: int, cost: float, datetime: str) -> int:
+        databaseIndexInserted = -1 #TODO
+        
         return databaseIndexInserted
 
 
@@ -489,7 +495,7 @@ class Database:
                 else:
                     print(f'Table Name {table} conversion not implemented')
 
-    def is_date_between(startDatetimeObj, endDatetimeObj, dateToCheck) -> bool:
+    def is_date_between(self, startDatetimeObj, endDatetimeObj, dateToCheck) -> bool:
         return startDatetimeObj <= dateToCheck <= endDatetimeObj
 
 if __name__ == "__main__":
@@ -508,7 +514,7 @@ if __name__ == "__main__":
     print(checkOutErrors)
     """
     
-    users = db.query_table("UsersTable")
+    users = db.query_table("DailyEnergyTable")
     for data in users:
         employeeID = data[GC.EMPLOYEE_ID_COLUMN_NUMBER]
         
@@ -526,12 +532,6 @@ if __name__ == "__main__":
     #db.export_table_to_csv(["WeeklyReportTable", "CheckInTable", "CheckOutTable"])
     
     today = db.get_date_time()
-    print(f'Hours = {db.calculate_time_delta(1001, today):.4f}')
-
-    databaseSearch = db.search_users_table("1001")
-    if len(databaseSearch) > 0:
-        print("Found employee ID in database")
-        print(databaseSearch)
 
     db.close_database()
     

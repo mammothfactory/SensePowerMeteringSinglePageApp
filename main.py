@@ -16,6 +16,7 @@ __doc__        = "Simple PWA to display the cost of the electrical power measure
 # pylint: disable=global-statement
 
 # Standard Python libraries
+import sys                                      # Used to determine which operating system this code is running on
 from datetime import datetime, time, timedelta 	# Manipulate calendar dates & time objects https://docs.python.org/3/library/datetime.html
 
 # 3rd party libraries
@@ -31,12 +32,14 @@ import GlobalConstants as GC                    # Useful global constants
 from Database import Database                   # Store non-Personally Identifiable Information in local (to server) SQlite database
 import UserInterface
 
-app = FastAPI()
+api = FastAPI()
 totalEnergy = 0                     # Units are kWh
 sanitizedInput = ''                 # Default string variable used to search for data
 validDate = '2023-12-30T13:45:42'   # Valid datetime object in the  ISO-?? format. Called usin .isoformet() TODO
 canUpdateweeklyReportTable = True
 
+THREE_AM = time(3, 0, 0)
+ELEVEN_PM = time(23, 0, 0)
 
 @app.get('/')
 def root():
@@ -70,18 +73,37 @@ def sync():
 
 if __name__ in {"__main__", "__mp_main__"}:
     #UserInterface.init(app)
+    
+    # Create directory and URL for local storage of images
+    if sys.platform.startswith('darwin'):
+        app.add_static_files('/static/images', GC.MAC_CODE_DIRECTORY +'/static/images')
+        app.add_static_files('/static/videos', GC.MAC_CODE_DIRECTORY + '/static/videos')
+    elif sys.platform.startswith('linux'):
+        app.add_static_files('/static/images', GC.LINUX_CODE_DIRECTORY + '/static/images')
+        app.add_static_files('/static/videos', GC.LINUX_CODE_DIRECTORY + '/static/videos')
+    elif sys.platform.startswith('win'):
+        print("WARNING: Running MainHouse.py server code on Windows OS is NOT fully supported")
+        app.add_static_files('/static/images', GC.WINDOWS_CODE_DIRECTORY + '/static/images')
+        app.add_static_files('/static/videos', GC.WINDOWS_CODE_DIRECTORY + '/static/videos')
+    else:
+        print("ERROR: Running on an unknown operating system")
+        quit()
 
     db = Database()
-    db.setup_tables()
+    db.example_tables()
     #command = ['python3', 'pagekite.py', f'{GC.LOCAL_HOST_PORT_FOR_GUI}', 'timetracker.pagekite.me']
 
     ui.timer(GC.LABEL_UPDATE_TIME, lambda: clockedInLabel.set_visibility(False))
     ui.timer(GC.LABEL_UPDATE_TIME, lambda: clockedOutLabel.set_visibility(False))
     ui.timer(GC.LABEL_UPDATE_TIME, lambda: tryAgainLabel.set_visibility(False))
     ui.timer(GC.LABEL_UPDATE_TIME, lambda: UserInterface.set_background('white'))
-    ui.timer(GC.DATABASE_WEEKLY_REPORT_UPDATE_TIME, lambda: generate_report())
-    ui.timer(GC.CLOCK_UPDATE_TIME, lambda: UserInterface.build_svg_graph())
+    ui.timer(GC.DATABASE_WEEKLY_REPORT_UPDATE_TIME, lambda: generate_report(db))
+    ui.timer(GC.CLOCK_UPDATE_TIME, lambda: UserInterface.build_svg_graph(db, datetime.now()))
+    
+    ui.image('static/images/DollarGeneralEnergyLogo.png').classes('w-64 m-auto')
 
+    #ii = ui.interactive_image(houseType, on_mouse=determine_room_light_mouse_handler, events=['mousedown'], cross=True)
+    
     invalidIdLabel = ui.label('ID DE EMPLEADO NO VÁLIDO (INVALID EMPLOYEE ID)').style("color: red; font-size: 150%; font-weight: 300").classes("self-center")
     invalidIdLabel.visible = False
 
@@ -104,8 +126,8 @@ if __name__ in {"__main__", "__mp_main__"}:
             ui.label('RELOJ DE SALIDA (CLOCK OUT) ㅤ').style("font-size: 90%; font-weight: 300")
             ui.icon('logout')
 
-    clockedInLabel = ui.label(f'{validEmployeeID} - REGISTRO EN (CLOCKED IN)').style("color: green; font-size: 200%; font-weight: 300").classes("self-center")
-    clockedOutLabel = ui.label(f'{validEmployeeID} - FINALIZADO (CLOCKED OUT)').style("color: red; font-size: 200%; font-weight: 300").classes("self-center")
+    clockedInLabel = ui.label(f'REGISTRO EN (CLOCKED IN)').style("color: green; font-size: 200%; font-weight: 300").classes("self-center")
+    clockedOutLabel = ui.label(f'FINALIZADO (CLOCKED OUT)').style("color: red; font-size: 200%; font-weight: 300").classes("self-center")
     tryAgainLabel = ui.label('INTENTAR OTRA VEZ (TRY AGAIN)').style("color: red; font-size: 200%; font-weight: 300").classes("self-center")
 
     ui.run(native=GC.RUN_ON_NATIVE_OS, port=GC.LOCAL_HOST_PORT_FOR_GUI)

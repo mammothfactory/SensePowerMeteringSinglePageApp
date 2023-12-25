@@ -1,6 +1,27 @@
-from nicegui import ui, app
+#!/usr/bin/env python3
+"""
+__authors__    = ["Blaze Sanders"]
+__contact__    = "blazes@mfc.us"
+__copyright__  = "Copyright 2023"
+__license__    = "MIT License"
+__status__     = "Development"
+__deprecated__ = False
+__version__    = "0.1.0"
+"""
 
-from fastapi import FastAPI
+# Disable PyLint linting messages
+# https://pypi.org/project/pylint/
+# pylint: disable=line-too-long
+# pylint: disable=invalid-name
+
+
+# 3rd Party Libraries
+from nicegui import ui, app     #
+from fastapi import FastAPI     #
+
+# Internal Libraries
+from Database import Database
+
 
 def init(fastApiApp: FastAPI) -> None:
     @ui.page('init_setting')
@@ -9,11 +30,13 @@ def init(fastApiApp: FastAPI) -> None:
 
     token = '3' #load_dotenv()
     ui.run_with(fastApiApp, storage_secret=token)
-    
+
+
 def set_background(color: str) -> None:
     ui.query('body').style(f'background-color: {color}')
-    
-def build_svg_graph() -> str:
+
+
+def build_svg_graph(db: Database, now) -> str:
     """ Create an 1920 x 1080 graph in HTML / SVG
 
     Args:
@@ -22,14 +45,13 @@ def build_svg_graph() -> str:
     Returns:
         str: Valid HTML to create a time vs Wh line graph
     """
-    now = db.get_date_time()
     return f'''
     <svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
     <circle cx="200" cy="200" r="180" stroke="black" stroke-width="4" fill="white" />
     <line x1="200" y1="200" x2="200" y2="50" stroke="black" stroke-width="6" transform="rotate({now.minute / 60 * 360} 200 200)" />
     <line x1="200" y1="200" x2="200" y2="100" stroke="black" stroke-width="6" transform="rotate({now.hour / 12 * 360} 200 200)" />
     <circle cx="200" cy="200" r="20" fill="black" />
-    
+
     <!-- Hour marks -->
     <line x1="200" y1="50" x2="200" y2="70" stroke="black" stroke-width="10" transform="rotate(0 200 200)" />
     <line x1="200" y1="50" x2="200" y2="70" stroke="black" stroke-width="3" transform="rotate(30 200 200)" />

@@ -20,6 +20,12 @@ WEEK_NUMBER_COLUMN_NUMBER = 2
 MONTH_NUMBER_COLUMN_NUMBER = 2
 LOG_MESSAGE_COLUMN_NUMBER = 1
 
+# Default file location for code
+MAC_CODE_DIRECTORY   = '/Users/venus/GitRepos/SensePowerMeteringSinglePageApp'
+LINUX_CODE_DIRECTORY = '/SensePowerMeteringSinglePageApp'
+WINDOWS_CODE_DIRECTORY = 'C:/Users/???/SensePowerMeteringSinglePageApp'
+
+
 # GUI Display CONSTANTS
 DEBUG_STATEMENTS_ON = True
 RUN_ON_NATIVE_OS = False
