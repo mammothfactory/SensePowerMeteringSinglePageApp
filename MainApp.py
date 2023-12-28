@@ -22,7 +22,7 @@ from datetime import datetime, time, timedelta 	# Manipulate calendar dates & ti
 # 3rd party libraries
 from fastapi import FastAPI
 
-# Browser based GUI framework to build and display a user interface onmobile, PC, and Mac 
+# Browser based GUI framework to build and display a user interface onmobile, PC, and Mac
 # https://nicegui.io/
 from nicegui import app, ui
 from nicegui.events import MouseEventArguments
@@ -32,11 +32,16 @@ import GlobalConstants as GC                    # Useful global constants
 from Database import Database                   # Store non-Personally Identifiable Information in local (to server) SQlite database
 import UserInterface
 
+# Global Variables
 api = FastAPI()
+dateSelected = ''                   # Date selcted with left mouse click from the ui.date() calendar element
+currentGuiState = 0                 # State Machine number for the GUI layout
 totalEnergy = 0                     # Units are kWh
 sanitizedInput = ''                 # Default string variable used to search for data
 validDate = '2023-12-30T13:45:42'   # Valid datetime object in the  ISO-?? format. Called usin .isoformet() TODO
 canUpdateweeklyReportTable = True
+toggleButtonIconState = 'switch_left'
+
 
 THREE_AM = time(3, 0, 0)
 ELEVEN_PM = time(23, 0, 0)
@@ -71,9 +76,48 @@ def sync():
     #command = ['sudo', 'systemctl', 'restart', 'syncthing@root.service']
     pass
 
+
+def toggle_button_click(iconState: str):
+    global toggleButtonIconState
+    #ui.icon('switch_right')
+
+    if iconState == 'switch_left':
+        newIconState = 'switch_right'
+    else:
+        newIconState = 'switch_left'
+
+    toggleButtonIconState = newIconState
+
+
+def search_button_click(db: Database, startDate: str):
+    calendarElement.visible = False
+    UserInterface.build_svg_graph(db, startDate)
+
+
+def check_ui_state_machine():
+    """ Simple state machine to describe the GUI
+        State 0 means TODO
+        State 1 means TODO
+        State 2 means TODO
+    """
+    global currentGuiState
+
+    if calendarElement.visible == True and searchButton.visible == True:
+        newState = 0
+    elif calendarElement.visible == False and searchButton.visible == False:
+        newState = 1
+    else:
+        newState = 2
+
+    currentGuiState = newState
+
+
+
+
 if __name__ in {"__main__", "__mp_main__"}:
     #UserInterface.init(app)
-    
+    ui.colors(primary=GC.DOLLAR_STORE_LOGO_BLUE)
+
     # Create directory and URL for local storage of images
     if sys.platform.startswith('darwin'):
         app.add_static_files('/static/images', GC.MAC_CODE_DIRECTORY +'/static/images')
@@ -82,7 +126,7 @@ if __name__ in {"__main__", "__mp_main__"}:
         app.add_static_files('/static/images', GC.LINUX_CODE_DIRECTORY + '/static/images')
         app.add_static_files('/static/videos', GC.LINUX_CODE_DIRECTORY + '/static/videos')
     elif sys.platform.startswith('win'):
-        print("WARNING: Running MainHouse.py server code on Windows OS is NOT fully supported")
+        print("WARNING: Running Main.py server code on Windows OS is NOT fully supported")
         app.add_static_files('/static/images', GC.WINDOWS_CODE_DIRECTORY + '/static/images')
         app.add_static_files('/static/videos', GC.WINDOWS_CODE_DIRECTORY + '/static/videos')
     else:
@@ -93,43 +137,40 @@ if __name__ in {"__main__", "__mp_main__"}:
     db.example_tables()
     #command = ['python3', 'pagekite.py', f'{GC.LOCAL_HOST_PORT_FOR_GUI}', 'timetracker.pagekite.me']
 
-    ui.timer(GC.LABEL_UPDATE_TIME, lambda: clockedInLabel.set_visibility(False))
-    ui.timer(GC.LABEL_UPDATE_TIME, lambda: clockedOutLabel.set_visibility(False))
-    ui.timer(GC.LABEL_UPDATE_TIME, lambda: tryAgainLabel.set_visibility(False))
-    ui.timer(GC.LABEL_UPDATE_TIME, lambda: UserInterface.set_background('white'))
-    ui.timer(GC.DATABASE_WEEKLY_REPORT_UPDATE_TIME, lambda: generate_report(db))
-    ui.timer(GC.CLOCK_UPDATE_TIME, lambda: UserInterface.build_svg_graph(db, datetime.now()))
-    
-    ui.image('static/images/DollarGeneralEnergyLogo.png').classes('w-64 m-auto')
+    ui.timer(GC.UI_UPDATE_TIME, lambda: check_ui_state_machine())
+    ui.timer(GC.UI_UPDATE_TIME, lambda: UserInterface.build_svg_graph(graph, datetime.now()))
 
-    #ii = ui.interactive_image(houseType, on_mouse=determine_room_light_mouse_handler, events=['mousedown'], cross=True)
-    
-    invalidIdLabel = ui.label('ID DE EMPLEADO NO VÁLIDO (INVALID EMPLOYEE ID)').style("color: red; font-size: 150%; font-weight: 300").classes("self-center")
-    invalidIdLabel.visible = False
 
-    inputBox = ui.number(label='Ingrese su identificación de empleado', placeholder='Enter your Employee ID', value=None, \
-                        format='%i', \
-                        step='1000', \
-                        on_change=lambda e: invalidIdLabel.set_text(sanitize_employee_id(e.value)), \
-                        validation={'ID DE EMPLEADO NO VÁLIDO (INVALID EMPLOYEE ID)': lambda value: int(sanitizedID) <= 9999})
+    ui.image('static/images/DollarGeneralEnergyLogo.png').classes('w-64 m-auto') 
 
-    inputBox.classes("self-center").style("padding: 40px 0px; width: 600px; font-size: 30px;").props('clearable')
+    calendarElement = ui.date(value=Database.get_date_time(db), on_change=lambda e: dateSelected.set_text(e.value)).classes('m-auto').style("color: #001b36")
+    calendarElement.visible = True
 
-    
+    graph = ui.html().classes("self-center")
+    graph.visible = True
+
+
     # Invisible character https://invisibletext.com/#google_vignette
     with ui.row().classes("self-center"):
-        with ui.button(on_click=lambda e: clock_x(GC.CLOCK_IN, sanitizedID), color="green").classes("relative  h-24 w-64"):
-            ui.label('RELOJ EN (CLOCK IN) ㅤ').style('font-size: 90%; font-weight: 300')
-            ui.icon('login')
+        searchButton = ui.button(on_click=lambda e: search_button_click(db, dateSelected), color=GC.DOLLAR_STORE_LOGO_GRREN).classes("relative  h-24 w-64")
+        with searchButton:
+            searchButton.visible = True
+            ui.label('SEARCH ㅤ').style('font-size: 100%; font-weight: 300')
+            ui.icon('search')
 
-        with ui.button(on_click=lambda e: clock_x(GC.CLOCK_OUT, sanitizedID), color="red").classes("relative  h-24 w-64"):
-            ui.label('RELOJ DE SALIDA (CLOCK OUT) ㅤ').style("font-size: 90%; font-weight: 300")
-            ui.icon('logout')
-
-    clockedInLabel = ui.label(f'REGISTRO EN (CLOCKED IN)').style("color: green; font-size: 200%; font-weight: 300").classes("self-center")
-    clockedOutLabel = ui.label(f'FINALIZADO (CLOCKED OUT)').style("color: red; font-size: 200%; font-weight: 300").classes("self-center")
-    tryAgainLabel = ui.label('INTENTAR OTRA VEZ (TRY AGAIN)').style("color: red; font-size: 200%; font-weight: 300").classes("self-center")
+    with ui.row().classes("self-center"):
+        toggleButton = ui.button(on_click=lambda e: toggle_button_click(toggleButtonIconState), color="red").classes("relative  h-24 w-64")
+        toggleButton.visible = False
+        with toggleButton:
+            ui.label('TOGGLE WEEK & MONTH ㅤ').style("font-size: 100%; font-weight: 300")
+            ui.icon(toggleButtonIconState)
 
     ui.run(native=GC.RUN_ON_NATIVE_OS, port=GC.LOCAL_HOST_PORT_FOR_GUI)
 
+    #TODO Remove after I no longer need an ui.label example linked to a GUI timer
+    #invalidIdLabel = ui.label('ID DE EMPLEADO NO VÁLIDO (INVALID EMPLOYEE ID)').style("color: red; font-size: 150%; font-weight: 300").classes("self-center")
+    #invalidIdLabel.visible = False
+    #ui.timer(GC.LABEL_UPDATE_TIME, lambda: clockedInLabel.set_visibility(False))
+    #clocke dInLabel = ui.label(f'REGISTRO EN (CLOCKED IN)').style("color: green; font-size: 200%; font-weight: 300").classes("self-center")
+    #ui.timer(GC.LABEL_UPDATE_TIME, lambda: UserInterface.set_background('white'))
 

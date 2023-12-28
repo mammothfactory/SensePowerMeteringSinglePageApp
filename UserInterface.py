@@ -48,8 +48,8 @@ def build_svg_graph(db: Database, now) -> str:
     return f'''
     <svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
     <circle cx="200" cy="200" r="180" stroke="black" stroke-width="4" fill="white" />
-    <line x1="200" y1="200" x2="200" y2="50" stroke="black" stroke-width="6" transform="rotate({now.minute / 60 * 360} 200 200)" />
-    <line x1="200" y1="200" x2="200" y2="100" stroke="black" stroke-width="6" transform="rotate({now.hour / 12 * 360} 200 200)" />
+    <line x1="200" y1="200" x2="200" y2="50" stroke="black" stroke-width="6" transform="rotate({1 / 60 * 360} 200 200)" />
+    <line x1="200" y1="200" x2="200" y2="100" stroke="black" stroke-width="6" transform="rotate({10 / 12 * 360} 200 200)" />
     <circle cx="200" cy="200" r="20" fill="black" />
 
     <!-- Hour marks -->
@@ -99,7 +99,7 @@ async def update_graph(direction: int, sanitizedID: str):
     inputBox.set_value(None)                          # Clear user input box. Note set_value('') doesn't work :)
 
 
-def sanitize_search(inputText: str) -> str:
+def sanitize_weeknumber_date_input(inputText: str) -> str:
     """ Convert all bad user input to valid ouput and update GUI label visibility to control datatbase writes
 
     Args:
