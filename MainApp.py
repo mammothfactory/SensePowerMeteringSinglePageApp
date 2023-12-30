@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 __authors__    = ["Blaze Sanders"]
- __contact__   = "blazes@mfc.us"
+__contact__    = "blazes@mfc.us"
 __copyright__  = "Copyright 2023"
 __license__    = "MIT License"
 __status__     = "Development"
@@ -34,17 +34,13 @@ import UserInterface
 
 # Global Variables
 api = FastAPI()
-dateSelected = ''                   # Date selcted with left mouse click from the ui.date() calendar element
-currentGuiState = 0                 # State Machine number for the GUI layout
-totalEnergy = 0                     # Units are kWh
-sanitizedInput = ''                 # Default string variable used to search for data
-validDate = '2023-12-30T13:45:42'   # Valid datetime object in the  ISO-?? format. Called usin .isoformet() TODO
-canUpdateweeklyReportTable = True
-toggleButtonIconState = 'switch_left'
-
-
-THREE_AM = time(3, 0, 0)
-ELEVEN_PM = time(23, 0, 0)
+currentGuiState = 0                     # State Machine number for the GUI layout
+dateSelected = ''                       # Date selcted with left mouse click from the ui.date() calendar element
+totalEnergy = 0                         # Units are kWh
+sanitizedInput = ''                     # Default string variable used to search for data
+validDate = '2023-12-30T13:45:42'       # Valid datetime object in the  ISO-?? format. Called usin .isoformet() TODO
+canUpdateweeklyReportTable = True       # 
+toggleButtonIconState = 'switch_left'   #
 
 @app.get('/')
 def root():
@@ -91,6 +87,8 @@ def toggle_button_click(iconState: str):
 
 def search_button_click(db: Database, startDate: str):
     calendarElement.visible = False
+    logo.visible = False
+    graph.visible = True
     UserInterface.build_svg_graph(db, startDate)
 
 
@@ -112,6 +110,9 @@ def check_ui_state_machine():
     currentGuiState = newState
 
 
+def get_date_selected(date: str):
+    global dateSelected
+    dateSelected = date
 
 
 if __name__ in {"__main__", "__mp_main__"}:
@@ -138,17 +139,15 @@ if __name__ in {"__main__", "__mp_main__"}:
     #command = ['python3', 'pagekite.py', f'{GC.LOCAL_HOST_PORT_FOR_GUI}', 'timetracker.pagekite.me']
 
     ui.timer(GC.UI_UPDATE_TIME, lambda: check_ui_state_machine())
-    ui.timer(GC.UI_UPDATE_TIME, lambda: UserInterface.build_svg_graph(graph, datetime.now()))
+    ui.timer(GC.UI_UPDATE_TIME, lambda: graph.set_content(UserInterface.build_svg_graph(db, datetime.now())))
 
-
-    ui.image('static/images/DollarGeneralEnergyLogo.png').classes('w-64 m-auto') 
-
-    calendarElement = ui.date(value=Database.get_date_time(db), on_change=lambda e: dateSelected.set_text(e.value)).classes('m-auto').style("color: #001b36")
-    calendarElement.visible = True
+    logo = ui.image('static/images/DollarGeneralEnergyLogo.png').classes('w-64 m-auto')
 
     graph = ui.html().classes("self-center")
-    graph.visible = True
+    graph.visible = False
 
+    calendarElement = ui.date(value=Database.get_date_time(db), on_change=lambda e: get_date_selected(e.value)).classes('m-auto').style("color: #001b36")
+    calendarElement.visible = True
 
     # Invisible character https://invisibletext.com/#google_vignette
     with ui.row().classes("self-center"):
@@ -164,6 +163,14 @@ if __name__ in {"__main__", "__mp_main__"}:
         with toggleButton:
             ui.label('TOGGLE WEEK & MONTH ㅤ').style("font-size: 100%; font-weight: 300")
             ui.icon(toggleButtonIconState)
+
+    # Invisible character https://invisibletext.com/#google_vignette
+    with ui.row().classes("self-center"):
+        closeGraphButton = ui.button(on_click=lambda e: search_button_click(db, dateSelected), color=GC.DOLLAR_STORE_LOGO_GRREN).classes("relative  h-24 w-32")
+        with closeGraphButton:
+            searchButton.visible = True
+            ui.label('CLOSE ㅤ').style('font-size: 100%; font-weight: 300')
+            ui.icon('close')
 
     ui.run(native=GC.RUN_ON_NATIVE_OS, port=GC.LOCAL_HOST_PORT_FOR_GUI)
 
