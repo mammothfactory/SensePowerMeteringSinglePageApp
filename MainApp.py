@@ -35,7 +35,7 @@ import UserInterface
 # Global Variables
 api = FastAPI()
 currentGuiState = 0                     # State Machine number for the GUI layout
-dateSelected = ''                       # Date selcted with left mouse click from the ui.date() calendar element
+dateSelected = '' #datetime()           # Date selcted with left mouse click from the ui.date() calendar element
 totalEnergy = 0                         # Units are kWh
 sanitizedInput = ''                     # Default string variable used to search for data
 validDate = '2023-12-30T13:45:42'       # Valid datetime object in the  ISO-?? format. Called usin .isoformet() TODO
@@ -85,11 +85,20 @@ def toggle_button_click(iconState: str):
     toggleButtonIconState = newIconState
 
 
-def search_button_click(db: Database, startDate: str):
+def search_button_click(db: Database, startDate: datetime):
     calendarElement.visible = False
     logo.visible = False
     graph.visible = True
+    searchButton.visible = False
+    closeGraphButton.visible = True
     UserInterface.build_svg_graph(db, startDate)
+
+def close_graph_button_click():
+    calendarElement.visible = True
+    logo.visible = True
+    graph.visible = False
+    closeGraphButton.visible = False
+    searchButton.visible = True
 
 
 def check_ui_state_machine():
@@ -110,9 +119,9 @@ def check_ui_state_machine():
     currentGuiState = newState
 
 
-def get_date_selected(date: str):
+def get_date_selected(e: str):
     global dateSelected
-    dateSelected = date
+    dateSelected = e
 
 
 if __name__ in {"__main__", "__mp_main__"}:
@@ -136,12 +145,11 @@ if __name__ in {"__main__", "__mp_main__"}:
 
     db = Database()
     db.example_tables()
-    #command = ['python3', 'pagekite.py', f'{GC.LOCAL_HOST_PORT_FOR_GUI}', 'timetracker.pagekite.me']
 
     ui.timer(GC.UI_UPDATE_TIME, lambda: check_ui_state_machine())
-    ui.timer(GC.UI_UPDATE_TIME, lambda: graph.set_content(UserInterface.build_svg_graph(db, datetime.now())))
+    ui.timer(GC.UI_UPDATE_TIME, lambda: graph.set_content(UserInterface.build_svg_graph(db, dateSelected)))
 
-    logo = ui.image('static/images/DollarGeneralEnergyLogo.png').classes('w-64 m-auto')
+    logo = ui.image('static/images/DollarGeneralEnergyLogo.png').classes('w-96 m-auto')
 
     graph = ui.html().classes("self-center")
     graph.visible = False
@@ -151,7 +159,7 @@ if __name__ in {"__main__", "__mp_main__"}:
 
     # Invisible character https://invisibletext.com/#google_vignette
     with ui.row().classes("self-center"):
-        searchButton = ui.button(on_click=lambda e: search_button_click(db, dateSelected), color=GC.DOLLAR_STORE_LOGO_GRREN).classes("relative  h-24 w-64")
+        searchButton = ui.button(on_click=lambda e: search_button_click(db, dateSelected), color=GC.DOLLAR_STORE_LOGO_GREEN).classes("relative  h-24 w-64")
         with searchButton:
             searchButton.visible = True
             ui.label('SEARCH ㅤ').style('font-size: 100%; font-weight: 300')
@@ -166,9 +174,9 @@ if __name__ in {"__main__", "__mp_main__"}:
 
     # Invisible character https://invisibletext.com/#google_vignette
     with ui.row().classes("self-center"):
-        closeGraphButton = ui.button(on_click=lambda e: search_button_click(db, dateSelected), color=GC.DOLLAR_STORE_LOGO_GRREN).classes("relative  h-24 w-32")
+        closeGraphButton = ui.button(on_click=lambda e: close_graph_button_click(), color="red").classes("relative  h-24 w-32")
         with closeGraphButton:
-            searchButton.visible = True
+            closeGraphButton.visible = False
             ui.label('CLOSE ㅤ').style('font-size: 100%; font-weight: 300')
             ui.icon('close')
 

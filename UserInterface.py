@@ -14,6 +14,9 @@ __version__    = "0.1.0"
 # pylint: disable=line-too-long
 # pylint: disable=invalid-name
 
+# Standard Python Libraries
+from datetime import datetime, time, timedelta  # Manipulate calendar dates & time objects https://docs.python.org/3/library/datetime.>
+
 
 # 3rd Party Libraries
 from nicegui import ui, app     # Web base GUI framework
@@ -36,7 +39,7 @@ def set_background(color: str) -> None:
     ui.query('body').style(f'background-color: {color}')
 
 
-def build_svg_graph(db: Database, now) -> str:
+def build_svg_graph(db: Database, selectedDate: datetime) -> str:
     """ Create an 1920 x 1080 graph in HTML / SVG
 
     Args:
@@ -56,27 +59,48 @@ def build_svg_graph(db: Database, now) -> str:
     #</html>
 
     """
+    days = []
+    selectDateObject = datetime(selectedDate[0:3], selectedDate[5:6], selectedDate[8:9])
+    days.append(selectedDateObject)
+
+    for nextDayNumber in range(1, 7):
+        try:
+            days.append(selectedDateObject + timedelta(days=nextDayNumber))
+        except TypeError:
+            pass    #DO NOTHING  a cast from timeDelta object to str works just fine
+        #lastSunday = (self.get_date_time() - timedelta(days=8)).isoformat(timespec="minutes")[0:10]
+
+    day1 = days[0].isoformat(timespec="minutes")[0:10]
+    day2 = days[1].isoformat(timespec="minutes")[0:10]    # We only use the first 10 characters, none of the time data
+    day3 = days[2].isoformat(timespec="minutes")[0:10]
+    day4 = days[3].isoformat(timespec="minutes")[0:10]
+    day5 = days[4].isoformat(timespec="minutes")[0:10]
+    day6 = days[5].isoformat(timespec="minutes")[0:10]
+    day7 = days[6].isoformat(timespec="minutes")[0:10]
+
+    print(days)
+
     return f'''
-    <svg width="700" height="1100" viewBox="-100 -50 700 1100" xmlns="http://www.w3.org/2000/svg">
+    <svg width="700" height="1000" viewBox="-100 -50 800 1100" xmlns="http://www.w3.org/2000/svg">
         <title>Energy Consumption Bar Graph</title>
 
         <!-- Draw the data  points first so that the axis black lines are visible -->
         <line x1="50"  y1="1000" x2="50" y2="0" stroke="red" stroke-width="100"/>
         <line x1="150" y1="1000" x2="150" y2="350" stroke="green" stroke-width="100"/>
-        <line x1="250" y1="1000" x2="250" y2="250" stroke="green" stroke-width="100"/>
-        <line x1="350" y1="1000" x2="350" y2="150" stroke="green" stroke-width="100"/>
-        <line x1="450" y1="1000" x2="450" y2="50" stroke="green" stroke-width="100"/>
+        <line x1="250" y1="1000" x2="250" y2="250" stroke="red" stroke-width="100"/>
+        <line x1="350" y1="1000" x2="350" y2="150" stroke="black" stroke-width="100"/>
+        <line x1="450" y1="1000" x2="450" y2="50" stroke="red" stroke-width="100"/>
         <line x1="550" y1="1000" x2="550" y2="0" stroke="green" stroke-width="100"/>
-        <line x1="650" y1="1000" x2="650" y2="650" stroke="green" stroke-width="100"/>
+        <line x1="650" y1="1000" x2="650" y2="650" stroke="red" stroke-width="100"/>
 
         <!-- X-Axis Labels -->
-        <text x="50"  y="1050" text-anchor="middle">Day 1</text>
-        <text x="150" y="1050" text-anchor="middle">Day 2</text>
-        <text x="250" y="1050" text-anchor="middle">Day 3</text>
-        <text x="350" y="1050" text-anchor="middle">Day 4</text>
-        <text x="450" y="1050" text-anchor="middle">Day 5</text>
-        <text x="550" y="1050" text-anchor="middle">Day 6</text>
-        <text x="650" y="1050" text-anchor="middle">Day 7</text>
+        <text x="50"  y="1050" text-anchor="middle">{day1}</text>
+        <text x="150" y="1050" text-anchor="middle">{day2}</text>
+        <text x="250" y="1050" text-anchor="middle">{day3}</text>
+        <text x="350" y="1050" text-anchor="middle">{day4}</text>
+        <text x="450" y="1050" text-anchor="middle">{day5}</text>
+        <text x="550" y="1050" text-anchor="middle">{day6}</text>
+        <text x="650" y="1050" text-anchor="middle">{day7}</text>
 
         <!-- Y-Axis Labels -->
         <text x="-10" y="0" text-anchor="end"> 1 kWh</text>
@@ -92,9 +116,9 @@ def build_svg_graph(db: Database, now) -> str:
         <text x="-10" y="1000" text-anchor="end">0.00 kWh</text>
 
         <!-- x-axis -->
-        <line x1="0" y1="1000" x2="700" y2="1000" stroke="black" stroke-width="5"/>
+        <line x1="0" y1="1000" x2="700" y2="1000" stroke="black" stroke-width="3"/>
         <!-- y-axis -->
-        <line x1="0" y1="0" x2="0" y2="1000" stroke="black" stroke-width="5"/>
+        <line x1="0" y1="0" x2="0" y2="1000" stroke="black" stroke-width="3"/>
 
     </svg>
     '''
