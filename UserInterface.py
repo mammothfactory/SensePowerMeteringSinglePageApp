@@ -19,12 +19,14 @@ from datetime import datetime, time, timedelta  # Manipulate calendar dates & ti
 
 
 # 3rd Party Libraries
-from nicegui import ui, app     # Web base GUI framework
-from fastapi import FastAPI     # Web Server at: uvicorn MainApp:app --reload --port 8000
+from nicegui import ui, app                             # Web base GUI framework
+from nicegui.events import ValueChangeEventArguments    # Catch button, radio button, and etc user actions
+from fastapi import FastAPI                             # Web Server at: uvicorn MainApp:app --reload --port 8000
 
 # Internal Libraries
 from Database import Database
 
+import GlobalConstants as GC
 
 def init(fastApiApp: FastAPI) -> None:
     @ui.page('init_setting')
@@ -39,7 +41,7 @@ def set_background(color: str) -> None:
     ui.query('body').style(f'background-color: {color}')
 
 
-def build_svg_graph(db: Database, selectedDate: datetime) -> str:
+def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
     """ Create an 1920 x 1080 graph in HTML / SVG
 
     Args:
@@ -59,33 +61,40 @@ def build_svg_graph(db: Database, selectedDate: datetime) -> str:
     #</html>
 
     """
-    days = []
-    selectDateObject = datetime(selectedDate[0:3], selectedDate[5:6], selectedDate[8:9])
-    days.append(selectedDateObject)
+    if selectedDate != None:
+        year, month, day = map(int, selectedDate.split('-'))
+    else:
+        current_date = datetime.now()
+        year, month, day = current_date.year, current_date.month, current_date.day
+
+    selectedDateObject = datetime(year, month, day)
+
+    days = [selectedDateObject]
 
     for nextDayNumber in range(1, 7):
-        try:
-            days.append(selectedDateObject + timedelta(days=nextDayNumber))
-        except TypeError:
-            pass    #DO NOTHING  a cast from timeDelta object to str works just fine
-        #lastSunday = (self.get_date_time() - timedelta(days=8)).isoformat(timespec="minutes")[0:10]
+        days.append(selectedDateObject + timedelta(days=nextDayNumber))
 
+    # We only use the first 10 characters, none of the time info
     day1 = days[0].isoformat(timespec="minutes")[0:10]
-    day2 = days[1].isoformat(timespec="minutes")[0:10]    # We only use the first 10 characters, none of the time data
+    valueDay1 = 100
+    #valueDay1 = db.
+    day2 = days[1].isoformat(timespec="minutes")[0:10]
     day3 = days[2].isoformat(timespec="minutes")[0:10]
     day4 = days[3].isoformat(timespec="minutes")[0:10]
     day5 = days[4].isoformat(timespec="minutes")[0:10]
     day6 = days[5].isoformat(timespec="minutes")[0:10]
     day7 = days[6].isoformat(timespec="minutes")[0:10]
 
-    print(days)
+    scalingFactor = 1000
+    
+    print(f"View selected was: {selectedView}")
 
     return f'''
-    <svg width="700" height="1000" viewBox="-100 -50 800 1100" xmlns="http://www.w3.org/2000/svg">
+    <svg width="700" height={scalingFactor*(GC.MAX_GRAPH_PERCENTAGE/100)} viewBox="-100 -50 800 1100" xmlns="http://www.w3.org/2000/svg">
         <title>Energy Consumption Bar Graph</title>
 
-        <!-- Draw the data  points first so that the axis black lines are visible -->
-        <line x1="50"  y1="1000" x2="50" y2="0" stroke="red" stroke-width="100"/>
+        <!-- Draw the data points first so that the axis black lines are visible -->
+        <line x1="50"  y1="1000" x2="50" y2={valueDay1-GC.MAX_GRAPH_PERCENTAGE} stroke="red" stroke-width="100"/>
         <line x1="150" y1="1000" x2="150" y2="350" stroke="green" stroke-width="100"/>
         <line x1="250" y1="1000" x2="250" y2="250" stroke="red" stroke-width="100"/>
         <line x1="350" y1="1000" x2="350" y2="150" stroke="black" stroke-width="100"/>

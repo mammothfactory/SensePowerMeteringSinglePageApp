@@ -35,25 +35,26 @@ import UserInterface
 # Global Variables
 api = FastAPI()
 currentGuiState = 0                     # State Machine number for the GUI layout
-dateSelected = '' #datetime()           # Date selcted with left mouse click from the ui.date() calendar element
+dateSelected = None                     # Date selcted with left mouse click from the ui.date() calendar element
 totalEnergy = 0                         # Units are kWh
 sanitizedInput = ''                     # Default string variable used to search for data
-validDate = '2023-12-30T13:45:42'       # Valid datetime object in the  ISO-?? format. Called usin .isoformet() TODO
-canUpdateweeklyReportTable = True       # 
-toggleButtonIconState = 'switch_left'   #
+toggleButtonIconState = 'switch_left'   # State used to display one of two button with differing icons
+canUpdateweeklyReportTable = True       # TODO
+selectedView = GC.WEEK_VIEW
 
 @app.get('/')
 def root():
     return totalEnergy
 
 
-def generate_report(db):
+def generate_report(db: Database):
     """ Generate EXCEL document every monday at 3 am
         Work week starts Sunday at 12:01 am and repeats every 7 days
         Work week ends Saturday at 11:59 pm and repeats every 7 days
         Assumes 12 hour work day at 11 pm if an employee only clocks IN but forgets to clock out
         Back calculates 12 hour work day using the time an employee clocks OUT if no clocking IN exists
 
+    Arg(s):
         db (sqlite): *.db database file
     """
     currentDateObj = db.get_date_time()
@@ -73,30 +74,41 @@ def sync():
     pass
 
 
-def toggle_button_click(iconState: str):
-    global toggleButtonIconState
-    #ui.icon('switch_right')
-
-    if iconState == 'switch_left':
-        newIconState = 'switch_right'
-    else:
-        newIconState = 'switch_left'
-
-    toggleButtonIconState = newIconState
+#def toggle_button_click(iconState):
+#    global toggleButtonIconState
+#    print(f"Icon state before IF {toggleButtonIconState}")
+#
+#    if iconState == 'switch_left':
+#        toggleButtonIconState = 'switch_right'
+#        toggleButtonLeft.visible = False
+#        toggleButtonRight.visible = True
+#    else:
+#        toogleButtonIconState = 'switch_left'
+#        toggleButtonLeft.visible = False
+#        toggleButtonRight.visible = True
+#
+#    print(f"Icon state after IF {toggleButtonIconState}")
 
 
 def search_button_click(db: Database, startDate: datetime):
     calendarElement.visible = False
     logo.visible = False
     graph.visible = True
+    radioButtons.visible = True
+    #toggleButtonLeft.visible = True
+    #toggleButtonRight.visible = True
     searchButton.visible = False
     closeGraphButton.visible = True
     UserInterface.build_svg_graph(db, startDate)
+
 
 def close_graph_button_click():
     calendarElement.visible = True
     logo.visible = True
     graph.visible = False
+    radioButtons.visible = False
+    #toggleButtonLeft.visible = False
+    #toggleButtonRight.visible = False
     closeGraphButton.visible = False
     searchButton.visible = True
 
@@ -125,7 +137,10 @@ def get_date_selected(e: str):
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    #UserInterface.init(app)
+    isDarkModeOn = True         # Application boots up in light mode
+    darkMode = ui.dark_mode()
+    darkMode.disable()          # TODO Move to a button after fixing calendar color contrast? darkMode.enable()
+
     ui.colors(primary=GC.DOLLAR_STORE_LOGO_BLUE)
 
     # Create directory and URL for local storage of images
@@ -147,7 +162,7 @@ if __name__ in {"__main__", "__mp_main__"}:
     db.example_tables()
 
     ui.timer(GC.UI_UPDATE_TIME, lambda: check_ui_state_machine())
-    ui.timer(GC.UI_UPDATE_TIME, lambda: graph.set_content(UserInterface.build_svg_graph(db, dateSelected)))
+    ui.timer(GC.UI_UPDATE_TIME, lambda: graph.set_content(UserInterface.build_svg_graph(db, dateSelected, selectedView)))
 
     logo = ui.image('static/images/DollarGeneralEnergyLogo.png').classes('w-96 m-auto')
 
@@ -166,11 +181,25 @@ if __name__ in {"__main__", "__mp_main__"}:
             ui.icon('search')
 
     with ui.row().classes("self-center"):
-        toggleButton = ui.button(on_click=lambda e: toggle_button_click(toggleButtonIconState), color="red").classes("relative  h-24 w-64")
-        toggleButton.visible = False
-        with toggleButton:
-            ui.label('TOGGLE WEEK & MONTH ㅤ').style("font-size: 100%; font-weight: 300")
-            ui.icon(toggleButtonIconState)
+        radioButtons = ui.radio(['WEEK VIEW','MONTH VIEW'], value=selectedView, \
+                                on_change=UserInterface.build_svg_graph(db, dateSelected, selectedView)).props('inline')
+        radioButtons.visible = False
+        
+#    # Invisible character https://invisibletext.com/#google_vignette
+#    with ui.row().classes("self-center"):
+#        toggleButtonLeft = ui.button(on_click=lambda e: toggle_button_click(toggleButtonIconState), color=GC.DOLLAR_STORE_LOGO_GREEN).classes("relative  h-24 w-64")
+#        toggleButtonLeft.visible = False
+#        with toggleButtonLeft:
+#            ui.label('CLICK TO SHOW MONTH ㅤ').style("font-size: 100%; font-weight: 300")
+#            ui.icon('switch_left')
+#
+#    ## Invisible character https://invisibletext.com/#google_vignette
+#    with ui.row().classes("self-center"):
+#        toggleButtonRight = ui.button(on_click=lambda e: toggle_button_click(toggleButtonIconState), color=GC.DOLLAR_STORE_LOGO_GREEN).classes("relative  h-24 w-64")
+#        toggleButtonRight.visible = False
+#        with toggleButtonRight:
+#            ui.label('CLICK TO SHOW WEEK ㅤ').style("font-size: 100%; font-weight: 300")
+#            ui.icon('switch_right')
 
     # Invisible character https://invisibletext.com/#google_vignette
     with ui.row().classes("self-center"):
@@ -188,4 +217,3 @@ if __name__ in {"__main__", "__mp_main__"}:
     #ui.timer(GC.LABEL_UPDATE_TIME, lambda: clockedInLabel.set_visibility(False))
     #clocke dInLabel = ui.label(f'REGISTRO EN (CLOCKED IN)').style("color: green; font-size: 200%; font-weight: 300").classes("self-center")
     #ui.timer(GC.LABEL_UPDATE_TIME, lambda: UserInterface.set_background('white'))
-
