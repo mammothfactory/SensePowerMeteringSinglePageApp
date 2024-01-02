@@ -20,7 +20,6 @@ from datetime import datetime, time, timedelta  # Manipulate calendar dates & ti
 
 # 3rd Party Libraries
 from nicegui import ui, app                             # Web base GUI framework
-from nicegui.events import ValueChangeEventArguments    # Catch button, radio button, and etc user actions
 from fastapi import FastAPI                             # Web Server at: uvicorn MainApp:app --reload --port 8000
 
 # Internal Libraries
@@ -49,18 +48,9 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
 
     Returns:
         str: Valid HTML to create a time vs Wh line graph
-
-    #<!DOCTYPE html>
-    #<html>
-    #<head>
-    #</head>
-    #<body>
-    #<div id="bar-graph-container"></div>
-
-    #</body>
-    #</html>
-
     """
+    if (GC.DEBUG_STATEMENTS_ON): print("BUILDING GRAPH")
+    
     if selectedDate != None:
         year, month, day = map(int, selectedDate.split('-'))
     else:
@@ -87,7 +77,7 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
 
     scalingFactor = 1000
     
-    print(f"View selected was: {selectedView}")
+    if (GC.DEBUG_STATEMENTS_ON): print(f"View selected was: {selectedView}")
 
     return f'''
     <svg width="700" height={scalingFactor*(GC.MAX_GRAPH_PERCENTAGE/100)} viewBox="-100 -50 800 1100" xmlns="http://www.w3.org/2000/svg">
@@ -132,29 +122,6 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
     </svg>
     '''
 
-    # GC.BAR_WIDTH = 30
-    # GC.MAX_CONSUMPTION = 500
-    #<circle cx="200" cy="200" r="180" stroke="black" stroke-width="4" fill="white" />
-
-
-    #<line x1="200" y1="200" x2="200" y2="100" stroke="black" stroke-width="6" transform="rotate({10 / 12 * 360} 200 200)" />
-    #<circle cx="200" cy="200" r="20" fill="black" />
-
-    #<!-- Hour marks -->
-    #<line x1="200" y1="50" x2="200" y2="70" stroke="black" stroke-width="10" transform="rotate(0 200 200)" />
-    #<line x1="200" y1="50" x2="200" y2="70" stroke="black" stroke-width="3" transform="rotate(30 200 200)" />
-    #<line x1="200" y1="50" x2="200" y2="70" stroke="black" stroke-width="3" transform="rotate(60 200 200)" />
-    #<line x1="200" y1="50" x2="200" y2="70" stroke="black" stroke-width="10" transform="rotate(90 200 200)" />
-    #<line x1="200" y1="50" x2="200" y2="70" stroke="black" stroke-width="3" transform="rotate(120 200 200)" />
-    #<line x1="200" y1="50" x2="200" y2="70" stroke="black" stroke-width="3" transform="rotate(150 200 200)" />
-    #<line x1="200" y1="50" x2="200" y2="70" stroke="black" stroke-width="10" transform="rotate(180 200 200)" />
-    #<line x1="200" y1="50" x2="200" y2="70" stroke="black" stroke-width="3" transform="rotate(210 200 200)" />
-    #<line x1="200" y1="50" x2="200" y2="70" stroke="black" stroke-width="3" transform="rotate(240 200 200)" />
-    #<line x1="200" y1="50" x2="200" y2="70" stroke="black" stroke-width="10" transform="rotate(270 200 200)" />
-    #<line x1="200" y1="50" x2="200" y2="70" stroke="black" stroke-width="3" transform="rotate(300 200 200)" />
-    #<line x1="200" y1="50" x2="200" y2="70" stroke="black" stroke-width="3" transform="rotate(330 200 200)" />
-
-
 async def update_graph(direction: int, sanitizedID: str):
     """ Perform database insert
 
@@ -183,32 +150,6 @@ async def update_graph(direction: int, sanitizedID: str):
        set_background('grey')
 
     inputBox.set_value(None)                          # Clear user input box. Note set_value('') doesn't work :)
-
-
-def sanitize_weeknumber_date_input(inputText: str) -> str:
-    """ Convert all bad user input to valid ouput and update GUI label visibility to control datatbase writes
-
-    Args:
-        inputText (str): Raw user input with possible errors
-
-    Returns:
-        str: A string with all blank spaces and non-digit characters removed
-    """
-    global sanitizedID
-
-    if int(inputText) > 9999 or int(inputText) < 0:
-        invalidIdLabel.visible = True
-        set_background('grey')
-        return 'ID DE EMPLEADO NO VÁLIDO (INVALID EMPLOYEE ID)'
-    else:
-       invalidIdLabel.visible = False
-
-    if inputText == None:
-        sanitizedID = ''
-    else:
-        sanitizedID = str(int(inputText))
-
-    return sanitizedID
 
 
 if __name__ == "__main__":

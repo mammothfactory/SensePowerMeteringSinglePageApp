@@ -15,40 +15,43 @@ __doc__        = "Simple PWA to display the cost of the electrical power measure
 # pylint: disable=invalid-name
 # pylint: disable=global-statement
 
-# Standard Python libraries
-import sys                                      # Used to determine which operating system this code is running on
-from datetime import datetime, time, timedelta 	# Manipulate calendar dates & time objects https://docs.python.org/3/library/datetime.html
+## Standard Python libraries
+import sys                                              # Determine which OS this code is running on https://docs.python.org/3/library/sys.html
+from datetime import datetime, time, timedelta      	# Manipulate calendar dates & time objects https://docs.python.org/3/library/datetime.html
 
-# 3rd party libraries
-from fastapi import FastAPI
+## 3rd party libraries
+# A modern, fast (high-performance), web framework for building APIs with Python 3.8+
+# https://fastapi.tiangolo.com
+from fastapi import FastAPI                             # Used to connect to UI to the unoffical Sense API https://github.com/scottbonline/sense
 
 # Browser based GUI framework to build and display a user interface onmobile, PC, and Mac
 # https://nicegui.io/
-from nicegui import app, ui
-from nicegui.events import MouseEventArguments
+from nicegui import app, ui                             # Define highest level app and UI elements
+from nicegui.events import ValueChangeEventArguments    # Catch button, radio button, and other user actions
 
-# Internally developed modules
-import GlobalConstants as GC                    # Useful global constants
-from Database import Database                   # Store non-Personally Identifiable Information in local (to server) SQlite database
-import UserInterface
+## Internally developed modules
+import GlobalConstants as GC                            # Useful global constants used across multiple files
+from Database import Database                           # Store non-Personally Identifiable Information in local (to server) SQlite database
+import UserInterface                                    # Update the bar graph UI
 
 # Global Variables
 api = FastAPI()
-currentGuiState = 0                     # State Machine number for the GUI layout
-dateSelected = None                     # Date selcted with left mouse click from the ui.date() calendar element
-totalEnergy = 0                         # Units are kWh
-sanitizedInput = ''                     # Default string variable used to search for data
-toggleButtonIconState = 'switch_left'   # State used to display one of two button with differing icons
-canUpdateweeklyReportTable = True       # TODO
-selectedView = GC.WEEK_VIEW
+currentGuiState = 0                         # State Machine number for the current GUI layout
+dateSelected = None                         # Date selcted with left mouse click from the ui.date() calendar element
+totalEnergy = 0                             # Units are kWh
+selectedView = GC.RADIO_BUTTON_VALUES[0]    # State of radio buttons which defines how energy graph is displayed
+canUpdateweeklyReportTable = True           # TODO
 
+
+"""TODO Connect to https://github.com/scottbonline/sense
 @app.get('/')
 def root():
     return totalEnergy
+"""
 
-
+"""TODO If Dollar General needs .csv output instead of just website GUI they could screenshot for their bosses (replace ''' if uncommented)
 def generate_report(db: Database):
-    """ Generate EXCEL document every monday at 3 am
+    ''' Generate EXCEL document every monday at 3 am
         Work week starts Sunday at 12:01 am and repeats every 7 days
         Work week ends Saturday at 11:59 pm and repeats every 7 days
         Assumes 12 hour work day at 11 pm if an employee only clocks IN but forgets to clock out
@@ -56,7 +59,8 @@ def generate_report(db: Database):
 
     Arg(s):
         db (sqlite): *.db database file
-    """
+    '''
+    
     currentDateObj = db.get_date_time()
     dayOfWeek = currentDateObj.weekday()
     currentTime = currentDateObj.time()
@@ -64,42 +68,16 @@ def generate_report(db: Database):
     if dayOfWeek == GC.MONDAY and (ELEVEN_PM < currentTime and currentTime < THREE_AM):
         canUpdateweeklyReportTable = True
         db.export_table_to_csv(["WeeklyReportTable", "CheckInTable", "CheckOutTable"])
+"""
 
-
-def sync():
-    """ Force Syncthing systemd daemon restart
-        https://www.youtube.com/watch?v=g-FZCIF0HJw
-    """
-    #command = ['sudo', 'systemctl', 'restart', 'syncthing@root.service']
-    pass
-
-
-#def toggle_button_click(iconState):
-#    global toggleButtonIconState
-#    print(f"Icon state before IF {toggleButtonIconState}")
-#
-#    if iconState == 'switch_left':
-#        toggleButtonIconState = 'switch_right'
-#        toggleButtonLeft.visible = False
-#        toggleButtonRight.visible = True
-#    else:
-#        toogleButtonIconState = 'switch_left'
-#        toggleButtonLeft.visible = False
-#        toggleButtonRight.visible = True
-#
-#    print(f"Icon state after IF {toggleButtonIconState}")
-
-
-def search_button_click(db: Database, startDate: datetime):
-    calendarElement.visible = False
+def search_button_click(db: Database, selectedView: GC):
     logo.visible = False
+    calendarElement.visible = False
     graph.visible = True
     radioButtons.visible = True
-    #toggleButtonLeft.visible = True
-    #toggleButtonRight.visible = True
     searchButton.visible = False
     closeGraphButton.visible = True
-    UserInterface.build_svg_graph(db, startDate)
+    graph.set_content(UserInterface.build_svg_graph(db, dateSelected, selectedView))
 
 
 def close_graph_button_click():
@@ -107,18 +85,29 @@ def close_graph_button_click():
     logo.visible = True
     graph.visible = False
     radioButtons.visible = False
-    #toggleButtonLeft.visible = False
-    #toggleButtonRight.visible = False
     closeGraphButton.visible = False
     searchButton.visible = True
 
 
+def get_radio_button_state(e: str):
+    global selectedView
+    selectedView = e
+    graph.set_content(UserInterface.build_svg_graph(db, dateSelected, selectedView))
+
+
+def get_date_selected(e: str):
+    global dateSelected
+    dateSelected = e
+    if (GC.DEBUG_STATEMENTS_ON): print(f"DateSelected variable was updated: {dateSelected}")
+
+
+""" TODO Remove if adding SQlite database and FastAPI code doesn't require a State Machine
 def check_ui_state_machine():
-    """ Simple state machine to describe the GUI
+    ''' Simple state machine to describe the GUI
         State 0 means TODO
         State 1 means TODO
         State 2 means TODO
-    """
+    '''
     global currentGuiState
 
     if calendarElement.visible == True and searchButton.visible == True:
@@ -129,21 +118,16 @@ def check_ui_state_machine():
         newState = 2
 
     currentGuiState = newState
-
-
-def get_date_selected(e: str):
-    global dateSelected
-    dateSelected = e
-
+"""
 
 if __name__ in {"__main__", "__mp_main__"}:
-    isDarkModeOn = True         # Application boots up in light mode
+    # Force application to run in light mode since calendar color is bad in dark mode
     darkMode = ui.dark_mode()
-    darkMode.disable()          # TODO Move to a button after fixing calendar color contrast? darkMode.enable()
+    darkMode.disable()
 
     ui.colors(primary=GC.DOLLAR_STORE_LOGO_BLUE)
 
-    # Create directory and URL for local storage of images
+    # Create directory and URI for local storage of images
     if sys.platform.startswith('darwin'):
         app.add_static_files('/static/images', GC.MAC_CODE_DIRECTORY +'/static/images')
         app.add_static_files('/static/videos', GC.MAC_CODE_DIRECTORY + '/static/videos')
@@ -161,8 +145,7 @@ if __name__ in {"__main__", "__mp_main__"}:
     db = Database()
     db.example_tables()
 
-    ui.timer(GC.UI_UPDATE_TIME, lambda: check_ui_state_machine())
-    ui.timer(GC.UI_UPDATE_TIME, lambda: graph.set_content(UserInterface.build_svg_graph(db, dateSelected, selectedView)))
+    #TODO REMOVE Since not used ui.timer(GC.UI_UPDATE_TIME, lambda: check_ui_state_machine())
 
     logo = ui.image('static/images/DollarGeneralEnergyLogo.png').classes('w-96 m-auto')
 
@@ -174,32 +157,18 @@ if __name__ in {"__main__", "__mp_main__"}:
 
     # Invisible character https://invisibletext.com/#google_vignette
     with ui.row().classes("self-center"):
-        searchButton = ui.button(on_click=lambda e: search_button_click(db, dateSelected), color=GC.DOLLAR_STORE_LOGO_GREEN).classes("relative  h-24 w-64")
+        searchButton = ui.button(on_click=lambda e: search_button_click(db, selectedView), \
+                                color=GC.DOLLAR_STORE_LOGO_GREEN).classes("relative  h-24 w-64")
         with searchButton:
             searchButton.visible = True
             ui.label('SEARCH ㅤ').style('font-size: 100%; font-weight: 300')
             ui.icon('search')
 
     with ui.row().classes("self-center"):
-        radioButtons = ui.radio(['WEEK VIEW','MONTH VIEW'], value=selectedView, \
-                                on_change=UserInterface.build_svg_graph(db, dateSelected, selectedView)).props('inline')
-        radioButtons.visible = False
-        
-#    # Invisible character https://invisibletext.com/#google_vignette
-#    with ui.row().classes("self-center"):
-#        toggleButtonLeft = ui.button(on_click=lambda e: toggle_button_click(toggleButtonIconState), color=GC.DOLLAR_STORE_LOGO_GREEN).classes("relative  h-24 w-64")
-#        toggleButtonLeft.visible = False
-#        with toggleButtonLeft:
-#            ui.label('CLICK TO SHOW MONTH ㅤ').style("font-size: 100%; font-weight: 300")
-#            ui.icon('switch_left')
-#
-#    ## Invisible character https://invisibletext.com/#google_vignette
-#    with ui.row().classes("self-center"):
-#        toggleButtonRight = ui.button(on_click=lambda e: toggle_button_click(toggleButtonIconState), color=GC.DOLLAR_STORE_LOGO_GREEN).classes("relative  h-24 w-64")
-#        toggleButtonRight.visible = False
-#        with toggleButtonRight:
-#            ui.label('CLICK TO SHOW WEEK ㅤ').style("font-size: 100%; font-weight: 300")
-#            ui.icon('switch_right')
+        radioButtons = ui.radio(GC.RADIO_BUTTON_VALUES, value=GC.RADIO_BUTTON_VALUES[0], \
+                                on_change=lambda e: get_radio_button_state(e.value)).props('inline')
+        with radioButtons:
+            radioButtons.visible = False
 
     # Invisible character https://invisibletext.com/#google_vignette
     with ui.row().classes("self-center"):
@@ -210,10 +179,3 @@ if __name__ in {"__main__", "__mp_main__"}:
             ui.icon('close')
 
     ui.run(native=GC.RUN_ON_NATIVE_OS, port=GC.LOCAL_HOST_PORT_FOR_GUI)
-
-    #TODO Remove after I no longer need an ui.label example linked to a GUI timer
-    #invalidIdLabel = ui.label('ID DE EMPLEADO NO VÁLIDO (INVALID EMPLOYEE ID)').style("color: red; font-size: 150%; font-weight: 300").classes("self-center")
-    #invalidIdLabel.visible = False
-    #ui.timer(GC.LABEL_UPDATE_TIME, lambda: clockedInLabel.set_visibility(False))
-    #clocke dInLabel = ui.label(f'REGISTRO EN (CLOCKED IN)').style("color: green; font-size: 200%; font-weight: 300").classes("self-center")
-    #ui.timer(GC.LABEL_UPDATE_TIME, lambda: UserInterface.set_background('white'))
