@@ -24,18 +24,27 @@ from datetime import datetime, time, timedelta      	# Manipulate calendar dates
 # https://fastapi.tiangolo.com
 from fastapi import FastAPI                             # Used to connect to UI to the unoffical Sense API https://github.com/scottbonline/sense
 
-# Browser based GUI framework to build and display a user interface onmobile, PC, and Mac
+# Browser based GUI framework to build and display a user interface on mobile, PC, and Mac
 # https://nicegui.io/
 from nicegui import app, ui                             # Define highest level app and UI elements
 from nicegui.events import ValueChangeEventArguments    # Catch button, radio button, and other user actions
+
+# Unofficial API for the Sense Energy Monitor
+# https://github.com/scottbonline/sense
+from sense_energy import Senseable                      # Used to connect to the Sense hardware in factory https://sense.com/sense-home-energy-monitor/                      
+
+# Load environment variables for usernames, passwords, & API keys
+# https://pypi.org/project/python-dotenv/
+from dotenv import dotenv_values                        # Used to login into Sense API
 
 ## Internally developed modules
 import GlobalConstants as GC                            # Useful global constants used across multiple files
 from Database import Database                           # Store non-Personally Identifiable Information in local (to server) SQlite database
 import UserInterface                                    # Update the bar graph UI
 
-# Global Variables
-api = FastAPI()
+## Global Variables
+api = FastAPI()                             # Method for connection to Sense API https://github.com/scottbonline/sense
+sense = Senseable()                         # Object to authenticate and collect realtime trends
 currentGuiState = 0                         # State Machine number for the current GUI layout
 dateSelected = None                         # Date selcted with left mouse click from the ui.date() calendar element
 totalEnergy = 0                             # Units are kWh
@@ -120,6 +129,16 @@ def check_ui_state_machine():
     currentGuiState = newState
 """
 
+
+def sense_updating():
+    sense.update_realtime()
+    sense.update_trend_data()
+    
+    print ("Active:", sense.active_power, "W")
+    print ("Daily:", sense.daily_usage, "KWh")
+    print ("Active Devices:",", ".join(sense.active_devices))
+
+
 if __name__ in {"__main__", "__mp_main__"}:
     # Force application to run in light mode since calendar color is bad in dark mode
     darkMode = ui.dark_mode()
@@ -144,8 +163,14 @@ if __name__ in {"__main__", "__mp_main__"}:
 
     db = Database()
     db.example_tables()
+    
+    config = dotenv_values()
+    username = config['SENSE_USERNAME']
+    password = config['SENSE_PASSWORD']
+    sense.authenticate(username, password)
 
     #TODO REMOVE Since not used ui.timer(GC.UI_UPDATE_TIME, lambda: check_ui_state_machine())
+    ui.timer(GC.UI_UPDATE_TIME, lambda: sense_updating())
 
     logo = ui.image('static/images/DollarGeneralEnergyLogo.png').classes('w-96 m-auto')
 
