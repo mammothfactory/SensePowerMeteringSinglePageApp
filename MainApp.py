@@ -171,13 +171,8 @@ if __name__ in {"__main__", "__mp_main__"}:
 
     db = Database()
     db.example_tables()
-<<<<<<< HEAD
-    
     # TODO Create Access Token https://github.com/Frankwin/SenseApiWrapper
     # https://github.com/Frankwin/SenseApiWrapper/blob/master/SenseApi/appsettings.json
-=======
-
->>>>>>> 745b0e9e9618d3c38c4c1743ab307a590306a44c
     config = dotenv_values()
     username = config['SENSE_USERNAME']
     password = config['SENSE_PASSWORD']
