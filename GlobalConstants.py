@@ -32,10 +32,9 @@ RUN_ON_NATIVE_OS = False
 LOCAL_HOST_PORT_FOR_GUI = 8282
 DOLLAR_STORE_LOGO_BLUE = '#001B36'
 DOLLAR_STORE_LOGO_GREEN = '#8EE511'
-MAX_GRAPH_PERCENTAGE = 100               # Units are in percentage
+MAX_GRAPH_PERCENTAGE = 100                              # Units are in percentage
 RADIO_BUTTON_VALUES = ['WEEK VIEW','MONTH VIEW']
-#WEEK_VIEW = 1
-#MONTH_VIEW = 2
+FACTORY_ENERGY_COST = 0.11                              # Units are US Dollars
 
 # NiceGUI ui.timer() CONSTANTS
 UI_UPDATE_TIME = 0.5                                    # 500 milliseconds

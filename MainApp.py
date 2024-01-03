@@ -132,7 +132,7 @@ def check_ui_state_machine():
 """
 
 
-def sense_updating(mode: str):
+def sense_updating(db: Database, mode: str):
     global instantPower
     global dailyEnergyUsage
     
@@ -145,6 +145,11 @@ def sense_updating(mode: str):
         print (f"{mode} Active: {instantPower} W")
         print (f"{mode} Daily:  {dailyEnergyUsage} kWh")
         print ("Active Devices:",", ".join(sense.active_devices))
+        
+    current_date = datetime.now()
+    year, month, day = current_date.year, current_date.month, current_date.day
+    currentDate = year + '-' + month + '-' + day    
+    db.insert_daily_energy_table(dailyEnergyUsage, GC.FACTORY_ENERGY_COST, currentDate)    #TODO call SQlite UPDATE if currentDate already exists
 
 
 if __name__ in {"__main__", "__mp_main__"}:
@@ -171,21 +176,17 @@ if __name__ in {"__main__", "__mp_main__"}:
 
     db = Database()
     db.example_tables()
-<<<<<<< HEAD
     
     # TODO Create Access Token https://github.com/Frankwin/SenseApiWrapper
     # https://github.com/Frankwin/SenseApiWrapper/blob/master/SenseApi/appsettings.json
-=======
-
->>>>>>> 745b0e9e9618d3c38c4c1743ab307a590306a44c
     config = dotenv_values()
     username = config['SENSE_USERNAME']
     password = config['SENSE_PASSWORD']
     #TODO After I get password from BLair sense.authenticate(username, password)
 
     #TODO REMOVE Since not used ui.timer(GC.UI_UPDATE_TIME, lambda: check_ui_state_machine())
-    ui.timer(10, lambda: sense_updating('DEV'))                                                  # TODO REMOVE AFTER TESTING API CALLS
-    ui.timer(GC.SENSE_UPDATE_TIME, lambda: sense_updating('PROD'))                                # Limit to once every 20 mins to not hit API limits
+    ui.timer(10, lambda: sense_updating(db, 'DEV'))                                                  # TODO REMOVE AFTER TESTING API CALLS
+    ui.timer(GC.SENSE_UPDATE_TIME, lambda: sense_updating(db, 'PROD'))                                # Limit to once every 20 mins to not hit API limits
 
     logo = ui.image('static/images/DollarGeneralEnergyLogo.png').classes('w-96 m-auto')
 
