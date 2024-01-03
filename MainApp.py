@@ -45,6 +45,8 @@ import UserInterface                                    # Update the bar graph U
 ## Global Variables
 api = FastAPI()                             # Method for connection to Sense API https://github.com/scottbonline/sense
 sense = Senseable()                         # Object to authenticate and collect realtime trends
+instantPower = 0                            # Instant power (in Watts) being measured by the Sense device
+dailyEnergyUsage = 0                        # Total energy (in kWh) measured by the Sense device so far (12:01 am to function call time)
 currentGuiState = 0                         # State Machine number for the current GUI layout
 dateSelected = None                         # Date selcted with left mouse click from the ui.date() calendar element
 totalEnergy = 0                             # Units are kWh
@@ -130,13 +132,19 @@ def check_ui_state_machine():
 """
 
 
-def sense_updating():
+def sense_updating(mode: str):
+    global instantPower
+    global dailyEnergyUsage
+    
     sense.update_realtime()
     sense.update_trend_data()
+    instantPower = sense.active_power
+    dailyEnergyUsage = sense.daily_usage
     
-    print ("Active:", sense.active_power, "W")
-    print ("Daily:", sense.daily_usage, "KWh")
-    print ("Active Devices:",", ".join(sense.active_devices))
+    if GC.DEBUG_STATEMENTS_ON: 
+        print (f"{mode} Active: {instantPower} W")
+        print (f"{mode} Daily:  {dailyEnergyUsage} kWh")
+        print ("Active Devices:",", ".join(sense.active_devices))
 
 
 if __name__ in {"__main__", "__mp_main__"}:
@@ -164,13 +172,16 @@ if __name__ in {"__main__", "__mp_main__"}:
     db = Database()
     db.example_tables()
     
+    # TODO Create Access Token https://github.com/Frankwin/SenseApiWrapper
+    # https://github.com/Frankwin/SenseApiWrapper/blob/master/SenseApi/appsettings.json
     config = dotenv_values()
     username = config['SENSE_USERNAME']
     password = config['SENSE_PASSWORD']
     sense.authenticate(username, password)
 
     #TODO REMOVE Since not used ui.timer(GC.UI_UPDATE_TIME, lambda: check_ui_state_machine())
-    ui.timer(GC.UI_UPDATE_TIME, lambda: sense_updating())
+    ui.timer(10, lambda: sense_updating('DEV'))                                                  # TODO REMOVE AFTER TESTING API CALLS
+    ui.timer(GC.SENSE_UPDATE_TIME, lambda: sense_updating('PROD'))                                # Limit to once every 20 mins to not hit API limits
 
     logo = ui.image('static/images/DollarGeneralEnergyLogo.png').classes('w-96 m-auto')
 

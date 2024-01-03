@@ -38,13 +38,14 @@ RADIO_BUTTON_VALUES = ['WEEK VIEW','MONTH VIEW']
 #MONTH_VIEW = 2
 
 # NiceGUI ui.timer() CONSTANTS
-UI_UPDATE_TIME = 0.5
-ONE_SECOND = 1
-ONE_HOUR = ONE_SECOND * 60 * 60
-CLOCK_UPDATE_TIME = 60 * ONE_SECOND
-LABEL_UPDATE_TIME = 4 * ONE_SECOND
-DATABASE_DAILY_REPORT_UPDATE_TIME  = 12 * ONE_HOUR
-DATABASE_WEEKLY_REPORT_UPDATE_TIME =  4 * ONE_HOUR
+UI_UPDATE_TIME = 0.5                                    # 500 milliseconds
+ONE_SECOND = 1                                          # 1 second
+ONE_HOUR = ONE_SECOND * 60 * 60                         # 1 hour
+CLOCK_UPDATE_TIME = 60 * ONE_SECOND                     # 60 seconds
+LABEL_UPDATE_TIME = 4 * ONE_SECOND                      # 4 seconds
+DATABASE_DAILY_REPORT_UPDATE_TIME  = 12 * ONE_HOUR      # 12 hours
+DATABASE_WEEKLY_REPORT_UPDATE_TIME =  4 * ONE_HOUR      # 4 hours
+SENSE_UPDATE_TIME = 20 * 60 * ONE_SECOND                # 20 minutes
 
 # DateTime Object CONSTANTS
 MONDAY = 0
