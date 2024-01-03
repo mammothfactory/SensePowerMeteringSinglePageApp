@@ -159,8 +159,8 @@ if __name__ in {"__main__", "__mp_main__"}:
         app.add_static_files('/static/images', GC.MAC_CODE_DIRECTORY +'/static/images')
         app.add_static_files('/static/videos', GC.MAC_CODE_DIRECTORY + '/static/videos')
     elif sys.platform.startswith('linux'):
-        app.add_static_files('/static/images', GC.LINUX_CODE_DIRECTORY + '/static/images')
-        app.add_static_files('/static/videos', GC.LINUX_CODE_DIRECTORY + '/static/videos')
+        app.add_static_files('/static/images', '/home/jupiter/Apps' + GC.LINUX_CODE_DIRECTORY + '/static/images')
+        app.add_static_files('/static/videos', '/home/jupiter/Apps' + GC.LINUX_CODE_DIRECTORY + '/static/videos')
     elif sys.platform.startswith('win'):
         print("WARNING: Running Main.py server code on Windows OS is NOT fully supported")
         app.add_static_files('/static/images', GC.WINDOWS_CODE_DIRECTORY + '/static/images')
@@ -171,13 +171,17 @@ if __name__ in {"__main__", "__mp_main__"}:
 
     db = Database()
     db.example_tables()
+<<<<<<< HEAD
     
     # TODO Create Access Token https://github.com/Frankwin/SenseApiWrapper
     # https://github.com/Frankwin/SenseApiWrapper/blob/master/SenseApi/appsettings.json
+=======
+
+>>>>>>> 745b0e9e9618d3c38c4c1743ab307a590306a44c
     config = dotenv_values()
     username = config['SENSE_USERNAME']
     password = config['SENSE_PASSWORD']
-    sense.authenticate(username, password)
+    #TODO After I get password from BLair sense.authenticate(username, password)
 
     #TODO REMOVE Since not used ui.timer(GC.UI_UPDATE_TIME, lambda: check_ui_state_machine())
     ui.timer(10, lambda: sense_updating('DEV'))                                                  # TODO REMOVE AFTER TESTING API CALLS
