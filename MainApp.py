@@ -148,7 +148,7 @@ def sense_updating(db: Database, mode: str):
         
     current_date = datetime.now()
     year, month, day = current_date.year, current_date.month, current_date.day
-    currentDate = year + '-' + month + '-' + day    
+    currentDate = str(year) + '-' + str(month) + '-' + str(day)    
     db.insert_daily_energy_table(dailyEnergyUsage, GC.FACTORY_ENERGY_COST, currentDate)    #TODO call SQlite UPDATE if currentDate already exists
 
 
@@ -175,14 +175,14 @@ if __name__ in {"__main__", "__mp_main__"}:
         quit()
 
     db = Database()
-    db.example_tables()
+    #TODO Add back after Database.py is working db.example_tables()
     
     # TODO Create Access Token https://github.com/Frankwin/SenseApiWrapper
     # https://github.com/Frankwin/SenseApiWrapper/blob/master/SenseApi/appsettings.json
     config = dotenv_values()
     username = config['SENSE_USERNAME']
     password = config['SENSE_PASSWORD']
-    #TODO After I get password from BLair sense.authenticate(username, password)
+    sense.authenticate(username, password)  #TODO FIND CORRECT PASSWORD?
 
     #TODO REMOVE Since not used ui.timer(GC.UI_UPDATE_TIME, lambda: check_ui_state_machine())
     ui.timer(10, lambda: sense_updating(db, 'DEV'))                                                  # TODO REMOVE AFTER TESTING API CALLS

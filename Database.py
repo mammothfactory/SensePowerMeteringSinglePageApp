@@ -163,20 +163,14 @@ class Database:
         """
         #CREATE TABLE IF NOT EXISTS DailyEnergyTable   (id INTEGER PRIMARY KEY, totalDailyWattHours INTEGER, currentCostPerWh INTEGER, currentCostPerWh TEXT)
         # TODO If datetime is already in a row UPDATE row with lastest totalDailyWattHours OTHERWISE INSERT new row 
-        results = self.query_table("DailyEnergyTable", date)
+        results, isEmpty, isValid = self.query_table("DailyEnergyTable", date)
         
-        if len(results) > 0:
+        try:
             idPrimaryKeyToUpdate = results[0][0]
-            self.cursor.execute("UPDATE DailyEnergyTable SET totalDailyWattHours = ?, currentCostPerWh = ?, timestamp = ? WHERE id = ?", (id, energy, cost, datetime))
-        else:
-            self.cursor.execute("INSERT INTO UsersTable (employeeId, firstName, lastName) VALUES (?, ?, ?)", (id, first, last))
-
-        self.commit_changes()
+            self.cursor.execute("UPDATE DailyEnergyTable SET totalDailyWattHours = ?, currentCostPerWh = ?, timestamp = ? WHERE id = ?", (energy, cost, date, idPrimaryKeyToUpdate))
+        except TypeError:
+            self.cursor.execute("INSERT INTO DailyEnergyTable (totalDailyWattHours, currentCostPerWh, timestamp) VALUES (?, ?, ?)", (energy, cost, date))
         
-        
-        self.cursor.execute("UPDATE DailyEnergyTable SET totalDailyWattHours = ?, currentCostPerWh = ?, timestamp = ? WHERE id = ?", (id, energy, cost, datetime))
-        
-        self.cursor.execute("INSERT INTO DailyEnergyTable (totalDailyWattHours, currentCostPerWh, timestamp) VALUES (?, ?, ?)", (energy, cost, datetime))
         lastDatabaseIndexInserted = self.cursor.lastrowid
         self.commit_changes()   
         
@@ -296,11 +290,11 @@ class Database:
                     return result[row-1][column], isEmpty, isValid
                   
         except IndexError:
-            db.insert_debug_logging_table(f'Invalid table row or column number {row} OR {column} respectively was requested')
+            self.insert_debug_logging_table(f'Invalid table row or column number {row} OR {column} respectively was requested')
             return None, None, False
         
         except sqlite3.OperationalError:
-            db.insert_debug_logging_table(f'The {tableName} table does NOT exist in EnergyReport.db or there is typo in table name')
+            self.insert_debug_logging_table(f'The {tableName} table does NOT exist in EnergyReport.db or there is typo in table name')
             return None, None, False
 
 
@@ -430,7 +424,10 @@ if __name__ == "__main__":
 
     db = Database()
     db.example_tables()
+    date = db.get_date_time()
     
+    results = db.query_table("DailyEnergyTable", date)
+    """ 
     insertErrors = db.insert_check_in_table(1001)
     print(insertErrors)
     checkOutErrors = db.insert_check_out_table(1001)
@@ -452,8 +449,5 @@ if __name__ == "__main__":
 
     
     #db.export_table_to_csv(["WeeklyReportTable", "CheckInTable", "CheckOutTable"])
-    
-    today = db.get_date_time()
-
+    """
     db.close_database()
-    
