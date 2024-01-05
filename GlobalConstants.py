@@ -10,13 +10,11 @@ __version__    = "0.1.0"
 __doc__        = "CONSTANTS for both LiteHouse and Lustron home configurations"
 """
 
-
 # Physical equipment at Marianna factory 
-WORKING_LED_LIGHTS = 154
-BROKEN_LED_LIGHTS  = 8
-OFF_LED_LIGHTS     = 8
+WORKING_LED_LIGHTS = 177
+BROKEN_LED_LIGHTS  = 9
+OFF_LED_LIGHTS     = 9
 NON_WORKING_LED_LIGHTS = BROKEN_LED_LIGHTS + OFF_LED_LIGHTS
-
 
 # SQLite Database CONSTANTS
 INSTANT_ENERGY_COLUMN_NUMBER = 1

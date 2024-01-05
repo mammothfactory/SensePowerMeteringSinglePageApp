@@ -39,7 +39,7 @@ class Database:
     """ Store non-Personally Identifiable Information in SQLite database
     """
 
-    def __init__(self, pollingRate: int=0.0166666666):
+    def __init__(self): #TODO REMOVE???, pollingRate: int=0.0166666666):
         """ Constructor to initialize an Database object
 
         Args:
@@ -48,18 +48,21 @@ class Database:
         # Connect to the database (create if it doesn't exist)
         self.conn = sqlite3.connect('EnergyReport.db')
         self.cursor = self.conn.cursor()
-        self.pollingRate = pollingRate     # In units of Hz
+        # TODO REMOVE I DONT THINK I USED THIS self.pollingRate = pollingRate     # In units of Hz
 
         # Create six tables in EnergyReport.db for collecting energy data
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS DailyEnergyTable   (id INTEGER PRIMARY KEY, totalDailyWattHours INTEGER, currentCostPerWh INTEGER, timestamp TEXT)''')
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS WeeklyEnergyTable  (id INTEGER PRIMARY KEY, totalWeeklyWattHours INTEGER, currentCostPerWh INTEGER, timestamp TEXT)''')
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS MonthlyEnergyTable (id INTEGER PRIMARY KEY, totalWeeklyWattHours INTEGER, currentCostPerWh INTEGER, timestamp TEXT)''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS DailyEnergyTable   (id INTEGER PRIMARY KEY, totalDailyWattHours INTEGER, currentCostPerWh REAL, timestamp TEXT)''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS WeeklyEnergyTable  (id INTEGER PRIMARY KEY, totalWeeklyWattHours INTEGER, currentCostPerWh REAL, timestamp TEXT)''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS MonthlyEnergyTable (id INTEGER PRIMARY KEY, totalWeeklyWattHours INTEGER, currentCostPerWh REAL, timestamp TEXT)''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS WeekGraphTable     (id INTEGER PRIMARY KEY, wattHours INTEGER, weekNumber TEXT)''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS MonthGraphTable    (id INTEGER PRIMARY KEY, wattHours INTEGER, monthNumber TEXT)''')
 
         # Create debuging logg
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS DebugLoggingTable (id INTEGER PRIMARY KEY, logMessage TEXT)''')
 
+        # Confifure graph database at .db file creation
+        self.setup_graph_tables()
+        
         # Commit the five tables to database
         self.conn.commit()
 
@@ -73,12 +76,42 @@ class Database:
             self.insert_week_graph_table(0, weekNumber)
 
         # Each year has 12 months
-        for monthNumber in range(1, 12):
+        for monthNumber in range(1, 13):
             self.insert_month_graph_table(0, monthNumber)
 
 
-    def update_graph_table(self, startDate: str, timeFrame: str = WEEKLY):
+    def insert_week_graph_table(self, wH: int, weekNum: int):
+        self.cursor.execute("INSERT INTO WeekGraphTable(wattHours, weekNumber) VALUES (?, ?)", (wH, weekNum))
+        self.commit_changes()   
+        
+    
+    def insert_month_graph_table(self, wH: int, monthNum: int):
+        self.cursor.execute("INSERT INTO MonthGraphTable(wattHours, monthNumber) VALUES (?, ?)", (wH, monthNum))
+        self.commit_changes() 
 
+
+    def update_graph_table(self, selectedDate: str, timeFrame: str = WEEKLY):
+
+
+
+        if startDate is in weekNumber:
+            weekNum = 99
+            monthNum = 99
+        date(2003, 12, 29).isocalendar()
+        
+        
+        if self.is_date_between(self, startDatetimeObj, endDatetimeObj, selectedDate):
+            pass
+        idPrimaryKeyToUpdate = ???
+        
+        energy = ???
+        
+
+        if timeFrame == GC.RADIO_BUTTON_VALUES[0]: #WEEKLY
+            self.cursor.execute("UPDATE WeekGraphTable SET wattHours = ?, weekNumber = ?, WHERE id = ?", (energy, weekNum,idPrimaryKeyToUpdate))
+        else:
+            self.cursor.execute("UPDATE MonthGraphTable SET wattHours = ?, weekNumber = ?, WHERE id = ?", (energy, monthNum, idPrimaryKeyToUpdate))
+        
         zero = 0
 
         result = -1 # TODO
@@ -193,8 +226,6 @@ class Database:
         return databaseIndexInserted
 
 
-
-
     def insert_check_in_table(self, id: int) -> tuple:
         """ Insert date and time (to current mintue) into CheckInTable of database
             https://en.wikipedia.org/wiki/ISO_8601
@@ -240,7 +271,7 @@ class Database:
         self.commit_changes()
 
 
-    def query_table(self, tableName: str, searchTerm: str, row: Optional[int]= None, column: Optional[int]= None) -> tuple:
+    def query_table(self, tableName: str, searchTerm: str = None, row: Optional[int]= None, column: Optional[int]= None) -> tuple:
         """ Return every row of a table from a *.db database
 
         Args:
@@ -254,19 +285,26 @@ class Database:
             isValid: Returns True is table name exists in EnergyReport.db, and False otherwise
             
         """
+
+        if searchTerm is None:
+            sqlStatement = f"SELECT * FROM {tableName}"
+        else:
+            sqlStatement = f"SELECT * FROM {tableName}"  #f"SELECT * FROM {tableName} WHERE content LIKE ?, ('%' + {str(searchTerm)} + '%',)" #self.cursor.execute("SELECT * FROM DatasetTable WHERE content LIKE ?", ('%' + str(searchTerm) + '%',))
+        
+        self.cursor.execute(sqlStatement)
+
+
+        isEmpty = False
+        isValid = True
+        result = self.cursor.fetchall()
+        if GC.DEBUG_STATEMENTS_ON: print(result)
+        
+        if len(result) == 0:
+            isEmpty = True
+
+        if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE QUERY TRY: {result}")
+            
         try:
-            sqlStatement = f"SELECT * FROM {tableName} WHERE content LIKE ?, ('%' + {str(searchTerm)} + '%',)"       
-            #self.cursor.execute("SELECT * FROM DatasetTable WHERE content LIKE ?", ('%' + str(searchTerm) + '%',))
-            self.cursor.execute(sqlStatement)
-
-            isEmpty = False
-            isValid = True
-            result = self.cursor.fetchall()
-            if len(result) == 0:
-                isEmpty = True
-
-            if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE QUERY TRY: {result}")
-      
             if row == None and column == None:
                 return result, isEmpty, isValid
             elif column == None:
@@ -348,7 +386,7 @@ class Database:
         for table in tableNames:
 
             # Fetch data from the table
-            data = self.query_table(table)
+            data = self.query_table(table, None)
 
             if len(data) == 0:
                 self.insert_debug_logging_table(f'No table named {table} when converting table to CSV in Database.export_table_to_csv() function at {self.get_date_time()}')
@@ -415,6 +453,8 @@ if __name__ == "__main__":
 
     db = Database()
     db.example_tables()
+    db.update_graph_table('2024-01-01', GC.RADIO_BUTTON_VALUES[0])
+    db.update_graph_table('2024-01-01', GC.RADIO_BUTTON_VALUES[0])
     
     date = db.get_date_time()
     isoDateDay = date.isoformat()[0:10]
@@ -422,10 +462,10 @@ if __name__ == "__main__":
     results = db.query_table("DailyEnergyTable", isoDateDay)
     if GC.DEBUG_STATEMENTS_ON: print(results)
     
-    results = db.query_table("DailyEnergyTable", "2024-01-01")
-    if GC.DEBUG_STATEMENTS_ON: print(results)
+    #results = db.query_table("DailyEnergyTable", "2024-01-01")
+    #if GC.DEBUG_STATEMENTS_ON: print(results)
     
-    db.export_table_to_csv(["DailyEnergyTable", "WeeklyEnergyTable", "MonthlyEnergyTable", "WeekGraphTable", "MonthGraphTable", "DebugLoggingTable"])
+    #db.export_table_to_csv(["DailyEnergyTable", "WeeklyEnergyTable", "MonthlyEnergyTable", "WeekGraphTable", "MonthGraphTable", "DebugLoggingTable"])
     
     """
     insertErrors = db.insert_check_in_table(1001)
