@@ -82,6 +82,12 @@ def generate_report(db: Database):
 """
 
 def search_button_click(db: Database, selectedView: GC):
+    """ Toogle the visibility of GUI elements and draw a SVG bar grpah to create the graph page
+    
+    Arg(s):
+        db (Database): SQlite database file containing all the logged (every GC.SENSE_UPDATE_TIME mintues) energy consumption datapoints
+        selectedView (GlobalConstants): A value in the GC.RADIO_BUTTON_VALUES list used to determine which graph view to display
+    """
     logo.visible = False
     calendarElement.visible = False
     graph.visible = True
@@ -92,6 +98,8 @@ def search_button_click(db: Database, selectedView: GC):
 
 
 def close_graph_button_click():
+    """ Toogle the visibility of GUI elements to create the home page
+    """
     calendarElement.visible = True
     logo.visible = True
     graph.visible = False
@@ -101,12 +109,23 @@ def close_graph_button_click():
 
 
 def get_radio_button_state(e: str):
+    """ Determine which of the two radio buttons where selected and redraw the bar graph in a WEEKLY or MONTHLY view
+
+    Arg(s):
+        e (String): e.value variable created via the ValueChangeEventArguments Class
+    """
     global selectedView
     selectedView = e
     graph.set_content(UserInterface.build_svg_graph(db, dateSelected, selectedView))
 
 
 def get_date_selected(e: str):
+    """ Store date clicked on the calendar element by the user into a global variable
+    
+    Arg(s):
+        e (String): e.value variable created via the ValueChangeEventArguments Class
+    
+    """
     global dateSelected
     dateSelected = e
     if (GC.DEBUG_STATEMENTS_ON): print(f"DateSelected variable was updated: {dateSelected}")
@@ -175,18 +194,15 @@ if __name__ in {"__main__", "__mp_main__"}:
         quit()
 
     db = Database()
-    #TODO Add back after Database.py is working db.example_tables()
-    
-    # TODO Create Access Token https://github.com/Frankwin/SenseApiWrapper
-    # https://github.com/Frankwin/SenseApiWrapper/blob/master/SenseApi/appsettings.json
+
     config = dotenv_values()
     username = config['SENSE_USERNAME']
     password = config['SENSE_PASSWORD']
-    sense.authenticate(username, password)  #TODO FIND CORRECT PASSWORD?
+    sense.authenticate(username, password)
 
     #TODO REMOVE Since not used ui.timer(GC.UI_UPDATE_TIME, lambda: check_ui_state_machine())
-    ui.timer(10, lambda: sense_updating(db, 'DEV'))                                                  # TODO REMOVE AFTER TESTING API CALLS
-    ui.timer(GC.SENSE_UPDATE_TIME, lambda: sense_updating(db, 'PROD'))                                # Limit to once every 20 mins to not hit API limits
+    if GC.DEBUG_STATEMENTS_ON: ui.timer(10, lambda: sense_updating(db, 'DEV'))           # Call every 10 seconds to speed up testing
+    ui.timer(GC.SENSE_UPDATE_TIME, lambda: sense_updating(db, 'PROD'))                   # Limit to once every 20 mins to not hit API limits
 
     logo = ui.image('static/images/DollarGeneralEnergyLogo.png').classes('w-96 m-auto')
 
@@ -199,7 +215,7 @@ if __name__ in {"__main__", "__mp_main__"}:
     # Invisible character https://invisibletext.com/#google_vignette
     with ui.row().classes("self-center"):
         searchButton = ui.button(on_click=lambda e: search_button_click(db, selectedView), \
-                                color=GC.DOLLAR_STORE_LOGO_GREEN).classes("relative  h-24 w-64")
+                                 color=GC.DOLLAR_STORE_LOGO_GREEN).classes("relative  h-24 w-64")
         with searchButton:
             searchButton.visible = True
             ui.label('SEARCH ㅤ').style('font-size: 100%; font-weight: 300')

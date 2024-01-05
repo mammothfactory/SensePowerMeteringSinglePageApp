@@ -136,8 +136,11 @@ class Database:
     def example_tables(self):
         """ As define by a 1/60 Hz polling rate of DailyEnergyTable, once every 24 hours polling rate for WeeklyEnergyTable, and once per week polling rate for MonthlyEnergyTable
         """
-        self.insert_daily_energy_table(200, 0.11, "2024-01-01T00:00:00")
-        self.insert_daily_energy_table(220, 0.11, "2024-01-01T23:59:00")
+        lastIndexInserted = self.insert_daily_energy_table(200, 0.11, "2024-01-01")
+        if GC.DEBUG_STATEMENTS_ON: print(f"LAST DATABASE INDEX INSERTED OR UPDATED WAS: {lastIndexInserted}")
+        lastIndexInserted = self.insert_daily_energy_table(220, 0.11, "2024-01-01")
+        if GC.DEBUG_STATEMENTS_ON: print(f"LAST DATABASE INDEX INSERTED OR UPDATED WAS: {lastIndexInserted}")
+        
 
         self.insert_weekly_energy_table(4800, 0.11, "2024-01-01T12:00:00")
         self.insert_weekly_energy_table(5280, 0.11, "2024-01-02T12:00:00")
@@ -161,9 +164,10 @@ class Database:
             cost (str): ???? (e.g. $0.11)
             datetime (str): ???? (e.g. 2024-01-01)
         """
-        #CREATE TABLE IF NOT EXISTS DailyEnergyTable   (id INTEGER PRIMARY KEY, totalDailyWattHours INTEGER, currentCostPerWh INTEGER, currentCostPerWh TEXT)
-        # TODO If datetime is already in a row UPDATE row with lastest totalDailyWattHours OTHERWISE INSERT new row 
+        if GC.DEBUG_STATEMENTS_ON: print(f"DATE TO QUERY IS: {date}")
+
         results, isEmpty, isValid = self.query_table("DailyEnergyTable", date)
+        if GC.DEBUG_STATEMENTS_ON: print(f"Tuple returned was: {(results, isEmpty, isValid)}")
         
         try:
             idPrimaryKeyToUpdate = results[0][0]
@@ -177,35 +181,18 @@ class Database:
         return lastDatabaseIndexInserted
 
 
-    def insert_weekly_energy_table(self, energy: int, cost: float, datetime: str) -> int:
+    def insert_weekly_energy_table(self, energy: int, cost: float, date: str) -> int:
         databaseIndexInserted = -1 #TODO
         
         return databaseIndexInserted
 
 
-    def insert_monthly_energy_table(self, energy: int, cost: float, datetime: str) -> int:
+    def insert_monthly_energy_table(self, energy: int, cost: float, date: str) -> int:
         databaseIndexInserted = -1 #TODO
         
         return databaseIndexInserted
 
 
-    def insert_users_table(self, id: int, first: str, last: str):
-        """ Insert employee ID, first name, and last name first initial into the User Table if employee ID is unqiue, otherwise update name
-
-        Args:
-            id (int): Employee ID (from 1 to 9999) linked to internal email (e.g. 9000@mammothfactory.co)
-            first (str): Full first name (or nickname) of employee
-            last (str): The first initial of employee last name to make data less Personally Identifiable Information 
-        """
-        results = self.search_users_table(id)
-
-        if len(results) > 0:
-            idPrimaryKeyToUpdate = results[0][0]
-            self.cursor.execute("UPDATE UsersTable SET employeeId = ?, firstName = ?, lastName = ? WHERE id = ?", (id, first, last, idPrimaryKeyToUpdate))
-        else:
-            self.cursor.execute("INSERT INTO UsersTable (employeeId, firstName, lastName) VALUES (?, ?, ?)", (id, first, last))
-
-        self.commit_changes()
 
 
     def insert_check_in_table(self, id: int) -> tuple:
@@ -278,6 +265,7 @@ class Database:
             if len(result) == 0:
                 isEmpty = True
 
+            if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE QUERY TRY: {result}")
       
             if row == None and column == None:
                 return result, isEmpty, isValid
@@ -291,10 +279,12 @@ class Database:
                   
         except IndexError:
             self.insert_debug_logging_table(f'Invalid table row or column number {row} OR {column} respectively was requested')
+            if GC.DEBUG_STATEMENTS_ON: print("INSIDE INDEX ERROR")
             return None, None, False
         
         except sqlite3.OperationalError:
             self.insert_debug_logging_table(f'The {tableName} table does NOT exist in EnergyReport.db or there is typo in table name')
+            if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
             return None, None, False
 
 
@@ -415,6 +405,7 @@ class Database:
                 else:
                     print(f'Table Name {table} conversion not implemented')
 
+
     def is_date_between(self, startDatetimeObj, endDatetimeObj, dateToCheck) -> bool:
         return startDatetimeObj <= dateToCheck <= endDatetimeObj
 
@@ -424,30 +415,22 @@ if __name__ == "__main__":
 
     db = Database()
     db.example_tables()
-    date = db.get_date_time()
     
-    results = db.query_table("DailyEnergyTable", date)
-    """ 
+    date = db.get_date_time()
+    isoDateDay = date.isoformat()[0:10]
+          
+    results = db.query_table("DailyEnergyTable", isoDateDay)
+    if GC.DEBUG_STATEMENTS_ON: print(results)
+    
+    results = db.query_table("DailyEnergyTable", "2024-01-01")
+    if GC.DEBUG_STATEMENTS_ON: print(results)
+    
+    db.export_table_to_csv(["DailyEnergyTable", "WeeklyEnergyTable", "MonthlyEnergyTable", "WeekGraphTable", "MonthGraphTable", "DebugLoggingTable"])
+    
+    """
     insertErrors = db.insert_check_in_table(1001)
     print(insertErrors)
     checkOutErrors = db.insert_check_out_table(1001)
     print(insertErrors)
-    
-    users = db.query_table("DailyEnergyTable")
-    for data in users:
-        employeeID = data[GC.EMPLOYEE_ID_COLUMN_NUMBER]
-        
-        currentDateObj = datetime(2023, 8, 27, 5, 0, 0) #db.get_date_time()
-        dayOfWeek = currentDateObj.weekday()
-        currentTime = currentDateObj.time()
-        if dayOfWeek == GC.SUNDAY and (ELEVEN_PM < currentTime and currentTime < THREE_AM):
-            canUpdateweeklyReportTable = False
-            
-        if canUpdateweeklyReportTable:
-            #print(f'Updating weekly report for ID {employeeID} on {currentDateObj}')
-            db.insert_weekly_report_table(employeeID, currentDateObj)
-
-    
-    #db.export_table_to_csv(["WeeklyReportTable", "CheckInTable", "CheckOutTable"])
     """
     db.close_database()
