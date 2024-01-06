@@ -39,6 +39,11 @@ def init(fastApiApp: FastAPI) -> None:
 def set_background(color: str) -> None:
     ui.query('body').style(f'background-color: {color}')
 
+def get_graph_value_per_day(db, date):
+    date = datetime.fromisoformat(date).strftime('%Y-%m-%d').replace("-0", "-")
+    watthours_per_day = db.get_daily_watthours(date)
+    graph_value_per_day = float(watthours_per_day)/7000.0*1000.0 ## 7000 and 1000 must be replaced with Global constants
+    return graph_value_per_day
 
 def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
     """ Create an 1920 x 1080 graph in HTML / SVG
@@ -66,31 +71,37 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
 
     # We only use the first 10 characters, none of the time info
     day1 = days[0].isoformat(timespec="minutes")[0:10]
-    valueDay1 = 100
-    #valueDay1 = db.
+    value_day1 = get_graph_value_per_day(db,day1)
     day2 = days[1].isoformat(timespec="minutes")[0:10]
+    value_day2 = get_graph_value_per_day(db,day2)
     day3 = days[2].isoformat(timespec="minutes")[0:10]
+    value_day3 = get_graph_value_per_day(db,day3)
     day4 = days[3].isoformat(timespec="minutes")[0:10]
+    value_day4 = get_graph_value_per_day(db,day4)
     day5 = days[4].isoformat(timespec="minutes")[0:10]
+    value_day5 = get_graph_value_per_day(db,day5)
     day6 = days[5].isoformat(timespec="minutes")[0:10]
+    value_day6 = get_graph_value_per_day(db,day6)
     day7 = days[6].isoformat(timespec="minutes")[0:10]
+    value_day7 = get_graph_value_per_day(db,day7)
 
     scalingFactor = 1000
+    graph_height = scalingFactor*(GC.MAX_GRAPH_PERCENTAGE/100)
     
     if (GC.DEBUG_STATEMENTS_ON): print(f"View selected was: {selectedView}")
 
     return f'''
-    <svg width="700" height={scalingFactor*(GC.MAX_GRAPH_PERCENTAGE/100)} viewBox="-100 -50 800 1100" xmlns="http://www.w3.org/2000/svg">
+    <svg width="700" height={graph_height} viewBox="-100 -50 800 1100" xmlns="http://www.w3.org/2000/svg">
         <title>Energy Consumption Bar Graph</title>
 
         <!-- Draw the data points first so that the axis black lines are visible -->
-        <line x1="50"  y1="1000" x2="50" y2={valueDay1-GC.MAX_GRAPH_PERCENTAGE} stroke="red" stroke-width="100"/>
-        <line x1="150" y1="1000" x2="150" y2="350" stroke="green" stroke-width="100"/>
-        <line x1="250" y1="1000" x2="250" y2="250" stroke="red" stroke-width="100"/>
-        <line x1="350" y1="1000" x2="350" y2="150" stroke="black" stroke-width="100"/>
-        <line x1="450" y1="1000" x2="450" y2="50" stroke="red" stroke-width="100"/>
-        <line x1="550" y1="1000" x2="550" y2="0" stroke="green" stroke-width="100"/>
-        <line x1="650" y1="1000" x2="650" y2="650" stroke="red" stroke-width="100"/>
+        <line x1="50"  y1="1000" x2="50" y2={graph_height-value_day1} stroke="grey" stroke-width="100"/>
+        <line x1="150" y1="1000" x2="150" y2={graph_height-value_day2}  stroke="green" stroke-width="100"/>
+        <line x1="250" y1="1000" x2="250" y2={graph_height-value_day3}  stroke="blue" stroke-width="100"/>
+        <line x1="350" y1="1000" x2="350" y2={graph_height-value_day4}  stroke="black" stroke-width="100"/>
+        <line x1="450" y1="1000" x2="450" y2={graph_height-value_day5}  stroke="yellow" stroke-width="100"/>
+        <line x1="550" y1="1000" x2="550" y2={graph_height-value_day6}  stroke="green" stroke-width="100"/>
+        <line x1="650" y1="1000" x2="650" y2={graph_height-value_day7}  stroke="orange" stroke-width="100"/>
 
         <!-- X-Axis Labels -->
         <text x="50"  y="1050" text-anchor="middle">{day1}</text>
@@ -102,17 +113,16 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
         <text x="650" y="1050" text-anchor="middle">{day7}</text>
 
         <!-- Y-Axis Labels -->
-        <text x="-10" y="0" text-anchor="end"> 1 kWh</text>
-        <text x="-10" y="100"  text-anchor="end">0.90 kWh</text>
-        <text x="-10" y="200"  text-anchor="end">0.80 kWh</text>
-        <text x="-10" y="300"  text-anchor="end">0.70 kWh</text>
-        <text x="-10" y="400"  text-anchor="end">0.60 kWh</text>
-        <text x="-10" y="500"  text-anchor="end">0.50 kWh</text>
-        <text x="-10" y="600"  text-anchor="end">0.40 kWh</text>
-        <text x="-10" y="700"  text-anchor="end">0.30 kWh</text>
-        <text x="-10" y="800"  text-anchor="end">0.20 kWh</text>
-        <text x="-10" y="900"  text-anchor="end">0.10 kWh</text>
-        <text x="-10" y="1000" text-anchor="end">0.00 kWh</text>
+        <text x="-10" y="0" text-anchor="end"> 7 kWh</text>
+        <text x="-10" y="125"  text-anchor="end">6 kWh</text>
+        <text x="-10" y="250"  text-anchor="end">5 kWh</text>
+        <text x="-10" y="375"  text-anchor="end">4 kWh</text>
+        <text x="-10" y="500"  text-anchor="end">4 kWh</text>
+        <text x="-10" y="625"  text-anchor="end">3 kWh</text>
+        <text x="-10" y="750"  text-anchor="end">2 kWh</text>
+        <text x="-10" y="875"  text-anchor="end">1 kWh</text>
+        <text x="-10" y="1000"  text-anchor="end">0 kWh</text>
+   
 
         <!-- x-axis -->
         <line x1="0" y1="1000" x2="700" y2="1000" stroke="black" stroke-width="3"/>
