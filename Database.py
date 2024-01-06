@@ -294,6 +294,30 @@ class Database:
             if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
             return 0
 
+    def get_weekly_watthours(self, target_date):
+        tableName = "WeeklyEnergyTable"
+        print("target_date to query is ", target_date)
+        try:
+            sql_query = f"""
+                SELECT SUM(totalWeeklyyWattHours) AS total_watthours
+                FROM WeeklyEnergyTable
+                WHERE timestamp = ?
+            """
+            self.cursor.execute(sql_query, (target_date,))
+            result = self.cursor.fetchone()[0]
+            if result is None:
+                print("Got no results!")
+                return 0
+            else:
+                print("watthours result for the week is", result)
+                return result
+        except IndexError:
+            if GC.DEBUG_STATEMENTS_ON: print("INSIDE INDEX ERROR")
+            return 0
+        except sqlite3.OperationalError:
+            if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
+            return 0
+
 
 
 
