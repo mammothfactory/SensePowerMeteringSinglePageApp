@@ -200,7 +200,7 @@ class Database:
         if GC.DEBUG_STATEMENTS_ON: print(f"DATE TO QUERY IS: {date}")
 
         results, isEmpty, isValid = self.query_table("DailyEnergyTable", date)
-        ##if GC.DEBUG_STATEMENTS_ON: print(f"Tuple returned was: {(results, isEmpty, isValid)}")
+        #if GC.DEBUG_STATEMENTS_ON: print(f"Tuple returned was: {(results, isEmpty, isValid)}")
         
         try:
             idPrimaryKeyToUpdate = results[0][0]
