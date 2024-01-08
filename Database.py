@@ -94,7 +94,7 @@ class Database:
 
 
 
-        if startDate in weekNumber:
+        if startDate is in weekNumber:
             weekNum = 99
             monthNum = 99
         date(2003, 12, 29).isocalendar()
@@ -132,6 +132,7 @@ class Database:
 #            employeeID = data[GC.EMPLOYEE_ID_COLUMN_NUMBER]
 #            name = data[GC.FIRST_NAME_COLUMN_NUMBER] + " " + data[GC.LAST_NAME_COLUMN_NUMBER]
 #            self.cursor.execute("INSERT INTO WeeklyReportTable (fullname, employeeId, totalHours, day6, day0, day1, day2, day3, day4, day5, inComments, outComments) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (name, employeeID, zero, zero, zero, zero, zero, zero, zero, zero, "Missed: ", "Missed:"))
+         """
 
 
     def commit_changes(self):
