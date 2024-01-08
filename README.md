@@ -1,11 +1,15 @@
 # SensePowerMeteringSinglePageApp
-Simple WPA to display the cost electrical  power measured by the Sense Flex product 
+Simple WPA to display the cost electrical power measured by the Sense Flex product 
 
-Progressive Web App (PWA) running on "Sense-Power-Metering" Linode server https://cloud.linode.com/linodes/53323885 (OR MFC Jupiter server) and deployed at http://energy-got.pagekite.me using www.pagekite.net <br>
+Progressive Web App (PWA) code named "Energy-Gauge-Optimize-Track" running on "Sense-Energy-Gauge-Optimize-Track" Linode server https://cloud.linode.com/linodes/53323885 (OR MFC Jupiter server) and deployed at http://energy-got.pagekite.me using www.pagekite.net <br>
 
 We are using the Sense Flex hardware found at https://sense.com <br>
 
 3rd party API library used to collect data can be found at https://github.com/scottbonline/sense <br>
+
+The frontend was built using https://nicegui.io with all graphs drawn using SVG tags in HTML <br>
+
+The backend uses a simple local SQlite database file <br>
 
 To delpoy the PWA to the global internet on Linode complete the following steps: <br> 
 1. Open "https://cloud.linode.com/linodes/53323885" server label in the "blazes@mfc.us" Linode account
