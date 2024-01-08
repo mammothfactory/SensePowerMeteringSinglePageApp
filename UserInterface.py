@@ -169,37 +169,6 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
         '''
 
 
-
-async def update_graph(direction: int, sanitizedID: str):
-    """ Perform database insert
-
-    Args:
-        direction (CONSTANT int):Define function as clock IN or clock OUT method
-        sanitizedID (str): Global sanitized number entered into Number text  box
-    """
-
-    if invalidIdLabel.visible == False and len(sanitizedID) == GC.VALID_EMPLOYEE_ID_LENGTH:
-        if direction == GC.CLOCK_IN:
-            clockedInLabel.set_text(f'{sanitizedID} - REGISTRO EN (CLOCKED IN)')
-            clockedInLabel.visible = True
-            db.insert_check_in_table(sanitizedID)
-            #set_background('grey')
-            await ui.run_javascript(f'getElement({inputBox.id}).focus()', respond=False)
-        
-        elif direction == GC.CLOCK_OUT:
-            clockedOutLabel.set_text(f'{sanitizedID} - RELOJ DE SALIDA (CLOCK OUT)')
-            clockedOutLabel.visible = True
-            db.insert_check_out_table(sanitizedID)
-            #set_background('grey')
-            await ui.run_javascript(f'getElement({inputBox.id}).focus()', respond=False)
-
-    else:
-       tryAgainLabel.visible = True
-       set_background('grey')
-
-    inputBox.set_value(None)                          # Clear user input box. Note set_value('') doesn't work :)
-
-
 if __name__ == "__main__":
     print("1")
     app = FastAPI()
