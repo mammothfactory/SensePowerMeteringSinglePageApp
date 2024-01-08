@@ -154,15 +154,24 @@ def check_ui_state_machine():
 def sense_updating(db: Database, mode: str):
     global instantPower
     global dailyEnergyUsage
-    
+
     sense.update_realtime()
     sense.update_trend_data()
     instantPower = sense.active_power
     dailyEnergyUsage = sense.daily_usage
+    weeklyEnergyUsage = sense.weekly_usage
+    monthlyEnergyUsage = sense.monthly_usage
+    yearlyEnergyUsage = sense.yearly_usage
+    timeZone = sense.time_zone
+
+
     
-    if GC.DEBUG_STATEMENTS_ON: 
+    if GC.DEBUG_STATEMENTS_ON:
         print (f"{mode} Active: {instantPower} W")
         print (f"{mode} Daily:  {dailyEnergyUsage} kWh")
+        print (f"{mode} Weekly:  {weeklyEnergyUsage} kWh")
+        print (f"{mode} Monthly:  {monthlyEnergyUsage} kWh")
+        print (f"{mode} Yearly:  {yearlyEnergyUsage} kWh")
         print ("Active Devices:",", ".join(sense.active_devices))
         
     current_date = datetime.now()

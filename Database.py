@@ -92,9 +92,9 @@ class Database:
 
     def update_graph_table(self, selectedDate: str, timeFrame: str = WEEKLY):
 
-        pass
-        """
-        if startDate in weekNumber:
+
+
+        if startDate is in weekNumber:
             weekNum = 99
             monthNum = 99
         date(2003, 12, 29).isocalendar()
@@ -102,9 +102,9 @@ class Database:
         
         if self.is_date_between(self, startDatetimeObj, endDatetimeObj, selectedDate):
             pass
-        idPrimaryKeyToUpdate = ???
-        
-        energy = ???
+        # idPrimaryKeyToUpdate = ???
+        #
+        # energy = ???
         
 
         if timeFrame == GC.RADIO_BUTTON_VALUES[0]: #WEEKLY
@@ -201,7 +201,7 @@ class Database:
         if GC.DEBUG_STATEMENTS_ON: print(f"DATE TO QUERY IS: {date}")
 
         results, isEmpty, isValid = self.query_table("DailyEnergyTable", date)
-        if GC.DEBUG_STATEMENTS_ON: print(f"Tuple returned was: {(results, isEmpty, isValid)}")
+        #if GC.DEBUG_STATEMENTS_ON: print(f"Tuple returned was: {(results, isEmpty, isValid)}")
         
         try:
             idPrimaryKeyToUpdate = results[0][0]
@@ -271,6 +271,57 @@ class Database:
         self.cursor.execute("INSERT INTO DebugLoggingTable (logMessage) VALUES (?)", (debugText,))
         self.commit_changes()
 
+    def get_daily_watthours(self, target_date):
+        tableName = "DailyEnergyTable"
+        print("target_date to query is ", target_date)
+        try:
+            sql_query = f"""
+                SELECT SUM(totalDailyWattHours) AS total_watthours
+                FROM DailyEnergyTable
+                WHERE timestamp = ?
+            """
+            self.cursor.execute(sql_query, (target_date,))
+            result = self.cursor.fetchone()[0]
+            if result is None:
+                print("Got no results!")
+                return 0
+            else:
+                print("watthours result for the day is", result)
+                return result
+        except IndexError:
+            if GC.DEBUG_STATEMENTS_ON: print("INSIDE INDEX ERROR")
+            return 0
+        except sqlite3.OperationalError:
+            if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
+            return 0
+
+    def get_weekly_watthours(self, target_date):
+        tableName = "WeeklyEnergyTable"
+        print("target_date to query is ", target_date)
+        try:
+            sql_query = f"""
+                SELECT SUM(totalWeeklyyWattHours) AS total_watthours
+                FROM WeeklyEnergyTable
+                WHERE timestamp = ?
+            """
+            self.cursor.execute(sql_query, (target_date,))
+            result = self.cursor.fetchone()[0]
+            if result is None:
+                print("Got no results!")
+                return 0
+            else:
+                print("watthours result for the week is", result)
+                return result
+        except IndexError:
+            if GC.DEBUG_STATEMENTS_ON: print("INSIDE INDEX ERROR")
+            return 0
+        except sqlite3.OperationalError:
+            if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
+            return 0
+
+
+
+
 
     def query_table(self, tableName: str, searchTerm: str = None, row: Optional[int]= None, column: Optional[int]= None) -> tuple:
         """ Return every row of a table from a *.db database
@@ -298,12 +349,12 @@ class Database:
         isEmpty = False
         isValid = True
         result = self.cursor.fetchall()
-        if GC.DEBUG_STATEMENTS_ON: print(result)
+        if GC.DEBUG_STATEMENTS_ON: print("------")
         
         if len(result) == 0:
             isEmpty = True
 
-        if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE QUERY TRY: {result}")
+        #if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE QUERY TRY: {result}")
             
         try:
             if row == None and column == None:

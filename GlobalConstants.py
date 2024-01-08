@@ -10,11 +10,13 @@ __version__    = "0.1.0"
 __doc__        = "CONSTANTS for both LiteHouse and Lustron home configurations"
 """
 
+
 # Physical equipment at Marianna factory 
-WORKING_LED_LIGHTS = 177
-BROKEN_LED_LIGHTS  = 9
-OFF_LED_LIGHTS     = 9
+WORKING_LED_LIGHTS = 154
+BROKEN_LED_LIGHTS  = 8
+OFF_LED_LIGHTS     = 8
 NON_WORKING_LED_LIGHTS = BROKEN_LED_LIGHTS + OFF_LED_LIGHTS
+
 
 # SQLite Database CONSTANTS
 INSTANT_ENERGY_COLUMN_NUMBER = 1
@@ -29,7 +31,7 @@ LOG_MESSAGE_COLUMN_NUMBER = 1
 # Default file location for code
 MAC_CODE_DIRECTORY   = '/Users/venus/GitRepos/SensePowerMeteringSinglePageApp'
 LINUX_CODE_DIRECTORY = '/SensePowerMeteringSinglePageApp'
-WINDOWS_CODE_DIRECTORY = 'C:/Users/???/SensePowerMeteringSinglePageApp'
+WINDOWS_CODE_DIRECTORY = 'D:/2-WorkStation/2-Upwork-Projects/Recommendation_For_Mammoth/Mammoth/SensePowerMeteringSinglePageApp'
 
 
 # GUI Display CONSTANTS
