@@ -93,7 +93,7 @@ class Database:
     def update_graph_table(self, selectedDate: str, timeFrame: str = WEEKLY):
 
 
-
+        """
         if startDate is in weekNumber:
             weekNum = 99
             monthNum = 99
