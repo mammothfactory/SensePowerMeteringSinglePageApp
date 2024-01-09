@@ -192,8 +192,15 @@ if __name__ in {"__main__", "__mp_main__"}:
         app.add_static_files('/static/images', GC.MAC_CODE_DIRECTORY +'/static/images')
         app.add_static_files('/static/videos', GC.MAC_CODE_DIRECTORY + '/static/videos')
     elif sys.platform.startswith('linux'):
-        app.add_static_files('/static/images', '/home/jupiter/Apps' + GC.LINUX_CODE_DIRECTORY + '/static/images')
-        app.add_static_files('/static/videos', '/home/jupiter/Apps' + GC.LINUX_CODE_DIRECTORY + '/static/videos')
+        try: #PRIMARY DEBIAN LINODE SERVER
+            print("Trying to deploy code to the 'Sense-Energy-Gauge-Optimizer-Track Debian based Linode server")
+            app.add_static_files('/static/images', '/root' + GC.LINUX_CODE_DIRECTORY + '/static/images')
+            app.add_static_files('/static/videos', '/root' + GC.LINUX_CODE_DIRECTORY + '/static/videos')
+        except RuntimeError: # BACKUP MFC JUPITER SERVER RUNNING UBUNTU
+            print("Linode Debian server failed deploying to MFC Jupiter server as hot backup")
+            app.add_static_files('/static/images', '/home/jupiter/Apps' + GC.LINUX_CODE_DIRECTORY + '/static/images')
+            app.add_static_files('/static/videos', '/home/jupiter/Apps' + GC.LINUX_CODE_DIRECTORY + '/static/videos')
+
     elif sys.platform.startswith('win'):
         print("WARNING: Running Main.py server code on Windows OS is NOT fully supported")
         app.add_static_files('/static/images', GC.WINDOWS_CODE_DIRECTORY + '/static/images')
