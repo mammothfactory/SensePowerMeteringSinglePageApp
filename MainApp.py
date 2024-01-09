@@ -118,7 +118,7 @@ def get_radio_button_state(e: str):
     """
     global selectedView
     selectedView = e
-    totalCostLabel.set_text(f"The total cost for this {selectedView} view is {GC.FACTORY_ENERGY_COST * totalEnergy} USD")
+    totalCostLabel.set_text(f"The total cost for this {selectedView} is {GC.FACTORY_ENERGY_COST * totalEnergy} USD")
     graph.set_content(UserInterface.build_svg_graph(db, dateSelected, selectedView))
 
 
@@ -254,7 +254,7 @@ if __name__ in {"__main__", "__mp_main__"}:
             ui.icon('close')
 
 
-    totalCostLabel = ui.label(f"The total cost for this {selectedView} view is {GC.FACTORY_ENERGY_COST * totalEnergy} USD").style("color: #001b36; font-size: 300%; font-weight: 300").classes("self-center")
+    totalCostLabel = ui.label(f"The total cost for this {selectedView} is {GC.FACTORY_ENERGY_COST * totalEnergy} USD").style("color: #001b36; font-size: 300%; font-weight: 300").classes("self-center")
     totalCostLabel.visible = False
     
     ui.run(native=GC.RUN_ON_NATIVE_OS, port=GC.LOCAL_HOST_PORT_FOR_GUI)
