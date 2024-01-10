@@ -27,6 +27,12 @@ from Database import Database
 
 import GlobalConstants as GC
 
+# Global variables for cost label
+total_kilowatthours_in_weekly_mode = 0.0
+
+total_kilowatthours_in_monthly_mode = 0.0
+
+
 def init(fastApiApp: FastAPI) -> None:
     @ui.page('init_setting')
     def init_setting():
@@ -89,7 +95,11 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
 
     scalingFactor = 1000
     graph_height = scalingFactor*(GC.MAX_GRAPH_PERCENTAGE/100)
-    
+
+    global total_kilowatthours_in_weekly_mode, total_kilowatthours_in_monthly_mode
+    total_kilowatthours_in_weekly_mode= sum(watthours_array)/1000.0
+    total_kilowatthours_in_monthly_mode = sum(weekly_watthours_array)/1000.0
+
     if (GC.DEBUG_STATEMENTS_ON): print(f"View selected was: {selectedView}")
 
     if selectedView == 'WEEK VIEW':
@@ -114,7 +124,7 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
                 <text x="450" y="1050" text-anchor="middle">{timestamp_array[4]}</text>
                 <text x="550" y="1050" text-anchor="middle">{timestamp_array[5]}</text>
                 <text x="650" y="1050" text-anchor="middle">{timestamp_array[6]}</text>
-        
+          
                 <!-- Y-Axis Labels -->
                 <text x="-10" y="0"       text-anchor="end">7 kWh</text>
                 <text x="-10" y="142.85"  text-anchor="end">6 kWh</text>

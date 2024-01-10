@@ -20,6 +20,7 @@ import sys                                              # Determine which OS thi
 from datetime import datetime, time, timedelta      	# Manipulate calendar dates & time objects https://docs.python.org/3/library/datetime.html
 import pytz
 from pytz import timezone
+
 ## 3rd party libraries
 # A modern, fast (high-performance), web framework for building APIs with Python 3.8+
 # https://fastapi.tiangolo.com
@@ -97,6 +98,7 @@ def search_button_click(db: Database, selectedView: GC):
     closeGraphButton.visible = True
     totalCostLabel.visible = True
     graph.set_content(UserInterface.build_svg_graph(db, dateSelected, selectedView))
+    totalCostLabel.set_text(f"The total cost for this {selectedView} is {round(GC.FACTORY_ENERGY_COST * UserInterface.total_kilowatthours_in_weekly_mode,2)} USD")
 
 
 def close_graph_button_click():
@@ -117,9 +119,17 @@ def get_radio_button_state(e: str):
     Arg(s):
         e (String): e.value variable created via the ValueChangeEventArguments Class
     """
-    global selectedView
+    global selectedView, totalEnergy
     selectedView = e
-    totalCostLabel.set_text(f"The total cost for this {selectedView} is {GC.FACTORY_ENERGY_COST * totalEnergy} USD")
+
+    if selectedView == 'WEEK VIEW':
+        totalEnergy = UserInterface.total_kilowatthours_in_weekly_mode
+        totalCostLabel.set_text(f"The total cost for this {selectedView} is {round(GC.FACTORY_ENERGY_COST * totalEnergy, 2)} USD")
+    else:
+        totalEnergy = UserInterface.total_kilowatthours_in_monthly_mode
+        totalCostLabel.set_text(f"The total cost for this {selectedView} is {round(GC.FACTORY_ENERGY_COST * totalEnergy, 2)} USD")
+
+
     graph.set_content(UserInterface.build_svg_graph(db, dateSelected, selectedView))
 
 
