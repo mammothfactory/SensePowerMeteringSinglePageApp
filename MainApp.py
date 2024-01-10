@@ -95,6 +95,7 @@ def search_button_click(db: Database, selectedView: GC):
     radioButtons.visible = True
     searchButton.visible = False
     closeGraphButton.visible = True
+    totalCostLabel.visible = True
     graph.set_content(UserInterface.build_svg_graph(db, dateSelected, selectedView))
 
 
@@ -106,6 +107,7 @@ def close_graph_button_click():
     graph.visible = False
     radioButtons.visible = False
     closeGraphButton.visible = False
+    totalCostLabel.visible = False
     searchButton.visible = True
 
 
@@ -117,6 +119,7 @@ def get_radio_button_state(e: str):
     """
     global selectedView
     selectedView = e
+    totalCostLabel.set_text(f"The total cost for this {selectedView} is {GC.FACTORY_ENERGY_COST * totalEnergy} USD")
     graph.set_content(UserInterface.build_svg_graph(db, dateSelected, selectedView))
 
 
@@ -201,6 +204,7 @@ if __name__ in {"__main__", "__mp_main__"}:
             app.add_static_files('/static/videos', '/root' + GC.LINUX_CODE_DIRECTORY + '/static/videos')
         except RuntimeError: # BACKUP MFC JUPITER SERVER RUNNING UBUNTU
             print("Linode Debian server failed deploying to MFC Jupiter server as hot backup")
+
             app.add_static_files('/static/images', '/home/jupiter/Apps' + GC.LINUX_CODE_DIRECTORY + '/static/images')
             app.add_static_files('/static/videos', '/home/jupiter/Apps' + GC.LINUX_CODE_DIRECTORY + '/static/videos')
 
@@ -254,4 +258,8 @@ if __name__ in {"__main__", "__mp_main__"}:
             ui.label('CLOSE ㅤ').style('font-size: 100%; font-weight: 300')
             ui.icon('close')
 
+
+    totalCostLabel = ui.label(f"The total cost for this {selectedView} is {GC.FACTORY_ENERGY_COST * totalEnergy} USD").style("color: #001b36; font-size: 300%; font-weight: 300").classes("self-center")
+    totalCostLabel.visible = False
+    
     ui.run(native=GC.RUN_ON_NATIVE_OS, port=GC.LOCAL_HOST_PORT_FOR_GUI)
