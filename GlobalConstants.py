@@ -45,14 +45,14 @@ RADIO_BUTTON_VALUES = ['WEEK VIEW','MONTH VIEW']
 FACTORY_ENERGY_COST = 0.11                              # Units are US Dollars
 
 # NiceGUI ui.timer() CONSTANTS
-UI_UPDATE_TIME = 0.5                                    # 500 milliseconds
 ONE_SECOND = 1                                          # 1 second
 ONE_HOUR = ONE_SECOND * 60 * 60                         # 1 hour
 CLOCK_UPDATE_TIME = 60 * ONE_SECOND                     # 60 seconds
 LABEL_UPDATE_TIME = 4 * ONE_SECOND                      # 4 seconds
 DATABASE_DAILY_REPORT_UPDATE_TIME  = 12 * ONE_HOUR      # 12 hours
 DATABASE_WEEKLY_REPORT_UPDATE_TIME =  4 * ONE_HOUR      # 4 hours
-SENSE_UPDATE_TIME = 20 * 60 * ONE_SECOND                # 20 minutes
+SENSE_UPDATE_TIME = 1 * ONE_HOUR                # 1 hour
+UI_UPDATE_TIME = 0.5 * ONE_HOUR                                    # 30 minutes
 
 # DateTime Object CONSTANTS
 MONDAY = 0

@@ -25,7 +25,7 @@ from typing import Optional
 
 # 3rd Party Libraries
 import pytz 					                # World Timezone Definitions  https://pypi.org/project/pytz/
-
+from pytz import timezone
 # Internal modules
 import GlobalConstants as GC
 
@@ -52,8 +52,8 @@ class Database:
 
         # Create six tables in EnergyReport.db for collecting energy data
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS DailyEnergyTable   (id INTEGER PRIMARY KEY, totalDailyWattHours INTEGER, currentCostPerWh REAL, timestamp TEXT)''')
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS WeeklyEnergyTable  (id INTEGER PRIMARY KEY, totalWeeklyWattHours INTEGER, currentCostPerWh REAL, timestamp TEXT)''')
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS MonthlyEnergyTable (id INTEGER PRIMARY KEY, totalWeeklyWattHours INTEGER, currentCostPerWh REAL, timestamp TEXT)''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS WeeklyEnergyTable  (id INTEGER PRIMARY KEY, totalWeeklyWattHours INTEGER, currentCostPerWh REAL, weekNumber TEXT)''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS MonthlyEnergyTable (id INTEGER PRIMARY KEY, totalMonthlyWattHours INTEGER, currentCostPerWh REAL, timestamp TEXT)''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS WeekGraphTable     (id INTEGER PRIMARY KEY, wattHours INTEGER, weekNumber TEXT)''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS MonthGraphTable    (id INTEGER PRIMARY KEY, wattHours INTEGER, monthNumber TEXT)''')
 
@@ -167,27 +167,27 @@ class Database:
         return now
 
 
-    def example_tables(self):
-        """ As define by a 1/60 Hz polling rate of DailyEnergyTable, once every 24 hours polling rate for WeeklyEnergyTable, and once per week polling rate for MonthlyEnergyTable
-        """
-        lastIndexInserted = self.insert_daily_energy_table(200, 0.11, "2024-01-01")
-        if GC.DEBUG_STATEMENTS_ON: print(f"LAST DATABASE INDEX INSERTED OR UPDATED WAS: {lastIndexInserted}")
-        lastIndexInserted = self.insert_daily_energy_table(220, 0.11, "2024-01-01")
-        if GC.DEBUG_STATEMENTS_ON: print(f"LAST DATABASE INDEX INSERTED OR UPDATED WAS: {lastIndexInserted}")
-        
-
-        self.insert_weekly_energy_table(4800, 0.11, "2024-01-01T12:00:00")
-        self.insert_weekly_energy_table(5280, 0.11, "2024-01-02T12:00:00")
-        self.insert_weekly_energy_table(4800, 0.11, "2024-01-03T12:00:00")
-        self.insert_weekly_energy_table(5280, 0.11, "2024-01-04T12:00:00")
-        self.insert_weekly_energy_table(4800, 0.11, "2024-01-05T12:00:00")
-        self.insert_weekly_energy_table(5280, 0.11, "2024-01-06T12:00:00")
-        self.insert_weekly_energy_table(4800, 0.11, "2024-01-07T12:00:00")
-
-        self.insert_monthly_energy_table(33360, 0.11, "2024-01-07T23:59:00")
-        self.insert_monthly_energy_table(36960, 0.11, "2024-01-14T23:59:00")
-        self.insert_monthly_energy_table(33360, 0.11, "2024-01-21T23:59:00")
-        self.insert_monthly_energy_table(36960, 0.11, "2024-01-28T23:59:00")
+    # def example_tables(self):
+    #     """ As define by a 1/60 Hz polling rate of DailyEnergyTable, once every 24 hours polling rate for WeeklyEnergyTable, and once per week polling rate for MonthlyEnergyTable
+    #     """
+    #     lastIndexInserted = self.insert_daily_energy_table(200, 0.11, "2024-01-01")
+    #     if GC.DEBUG_STATEMENTS_ON: print(f"LAST DATABASE INDEX INSERTED OR UPDATED WAS: {lastIndexInserted}")
+    #     lastIndexInserted = self.insert_daily_energy_table(220, 0.11, "2024-01-01")
+    #     if GC.DEBUG_STATEMENTS_ON: print(f"LAST DATABASE INDEX INSERTED OR UPDATED WAS: {lastIndexInserted}")
+    #
+    #
+    #     self.insert_weekly_energy_table(4800, 0.11, "2024-01-01T12:00:00")
+    #     self.insert_weekly_energy_table(5280, 0.11, "2024-01-02T12:00:00")
+    #     self.insert_weekly_energy_table(4800, 0.11, "2024-01-03T12:00:00")
+    #     self.insert_weekly_energy_table(5280, 0.11, "2024-01-04T12:00:00")
+    #     self.insert_weekly_energy_table(4800, 0.11, "2024-01-05T12:00:00")
+    #     self.insert_weekly_energy_table(5280, 0.11, "2024-01-06T12:00:00")
+    #     self.insert_weekly_energy_table(4800, 0.11, "2024-01-07T12:00:00")
+    #
+    #     self.insert_monthly_energy_table(33360, 0.11, "2024-01-07T23:59:00")
+    #     self.insert_monthly_energy_table(36960, 0.11, "2024-01-14T23:59:00")
+    #     self.insert_monthly_energy_table(33360, 0.11, "2024-01-21T23:59:00")
+    #     self.insert_monthly_energy_table(36960, 0.11, "2024-01-28T23:59:00")
 
 
     def insert_daily_energy_table(self, energy: int, cost: float, date: str) -> int:
@@ -198,27 +198,62 @@ class Database:
             cost (str): ???? (e.g. $0.11)
             datetime (str): ???? (e.g. 2024-01-01)
         """
-        if GC.DEBUG_STATEMENTS_ON: print(f"DATE TO QUERY IS: {date}")
+        lastDatabaseIndexInserted = -1
+        #if GC.DEBUG_STATEMENTS_ON: print(f"DATE TO QUERY IS: {date}")
 
-        results, isEmpty, isValid = self.query_table("DailyEnergyTable", date)
+        results, isEmpty, isValid = self.get_daily_watthours(date)
         #if GC.DEBUG_STATEMENTS_ON: print(f"Tuple returned was: {(results, isEmpty, isValid)}")
         
         try:
-            idPrimaryKeyToUpdate = results[0][0]
-            self.cursor.execute("UPDATE DailyEnergyTable SET totalDailyWattHours = ?, currentCostPerWh = ?, timestamp = ? WHERE id = ?", (energy, cost, date, idPrimaryKeyToUpdate))
+            if(results):
+                idPrimaryKeyToUpdate = results[0][2]
+                self.cursor.execute("UPDATE DailyEnergyTable SET totalDailyWattHours = ?, currentCostPerWh = ?, timestamp = ? WHERE id = ?", (energy, cost, date, idPrimaryKeyToUpdate))
+            else:
+                self.cursor.execute("INSERT INTO DailyEnergyTable (totalDailyWattHours, currentCostPerWh, timestamp) VALUES (?, ?, ?)", (energy, cost, date))
+
         except TypeError:
-            self.cursor.execute("INSERT INTO DailyEnergyTable (totalDailyWattHours, currentCostPerWh, timestamp) VALUES (?, ?, ?)", (energy, cost, date))
-        
+            # self.cursor.execute("INSERT INTO DailyEnergyTable (totalDailyWattHours, currentCostPerWh, timestamp) VALUES (?, ?, ?)", (energy, cost, date))
+            print("Error occured while inserting data...")
+        # try:
+        #     self.cursor.execute("INSERT INTO DailyEnergyTable (totalDailyWattHours, currentCostPerWh, timestamp) VALUES (?, ?, ?)", (energy, cost, date))
+        # except e:
+        #     print(e)
+        #     return lastDatabaseIndexInserted
         lastDatabaseIndexInserted = self.cursor.lastrowid
+
         self.commit_changes()   
         
         return lastDatabaseIndexInserted
 
 
     def insert_weekly_energy_table(self, energy: int, cost: float, date: str) -> int:
-        databaseIndexInserted = -1 #TODO
-        
-        return databaseIndexInserted
+        current_week_number = datetime.strptime(date, '%Y-%m-%d').isocalendar()[1]
+
+        lastDatabaseIndexInserted = -1
+        #if GC.DEBUG_STATEMENTS_ON: print(f"DATE TO QUERY IS: {date}")
+
+        results, isEmpty, isValid = self.get_weekly_watthours(current_week_number)
+        #if GC.DEBUG_STATEMENTS_ON: print(f"Tuple returned was: {(results, isEmpty, isValid)}")
+        try:
+            if(results):
+                weekNumberToUpdate = results[0][1]
+                self.cursor.execute("UPDATE WeeklyEnergyTable SET totalWeeklyWattHours = ?, currentCostPerWh = ?, weekNumber = ? WHERE weekNumber = ?", (energy, cost, current_week_number, weekNumberToUpdate))
+            else:
+                self.cursor.execute("INSERT INTO WeeklyEnergyTable (totalWeeklyWattHours, currentCostPerWh, weekNumber) VALUES (?, ?, ?)", (energy, cost, current_week_number))
+
+        except TypeError:
+            # self.cursor.execute("INSERT INTO DailyEnergyTable (totalDailyWattHours, currentCostPerWh, timestamp) VALUES (?, ?, ?)", (energy, cost, date))
+            print("Error occured while inserting data...")
+        # try:
+        #     self.cursor.execute("INSERT INTO DailyEnergyTable (totalDailyWattHours, currentCostPerWh, timestamp) VALUES (?, ?, ?)", (energy, cost, date))
+        # except e:
+        #     print(e)
+        #     return lastDatabaseIndexInserted
+        lastDatabaseIndexInserted = self.cursor.lastrowid
+
+        self.commit_changes()
+
+        return lastDatabaseIndexInserted
 
 
     def insert_monthly_energy_table(self, energy: int, cost: float, date: str) -> int:
@@ -271,57 +306,101 @@ class Database:
         self.cursor.execute("INSERT INTO DebugLoggingTable (logMessage) VALUES (?)", (debugText,))
         self.commit_changes()
 
-    def get_daily_watthours(self, target_date):
-        tableName = "DailyEnergyTable"
-        print("target_date to query is ", target_date)
+    def get_daily_watthours(self, start_date):
+        isEmpty = False
+        isValid = True
+
+        current_date = datetime.now(timezone('CST6CDT'))
+        year, month, day = current_date.year, current_date.month, current_date.day
+        current_date = str(year) + '-' + str(month) + '-' + str(day)
+
+        start_day = int(start_date.split('-')[2])
+        delta = day - start_day
+
         try:
-            sql_query = f"""
-                SELECT SUM(totalDailyWattHours) AS total_watthours
-                FROM DailyEnergyTable
-                WHERE timestamp = ?
-            """
-            self.cursor.execute(sql_query, (target_date,))
-            result = self.cursor.fetchone()[0]
-            if result is None:
-                print("Got no results!")
-                return 0
+            if delta < 7:
+                sql_query = """
+                    SELECT timestamp, totalDailyWattHours, id
+                    FROM DailyEnergyTable 
+                    WHERE id >= (SELECT id FROM DailyEnergyTable WHERE timestamp = ?) 
+                    AND id <= (SELECT id FROM DailyEnergyTable WHERE timestamp = ?)
+                """
+
+                self.cursor.execute(sql_query, (start_date,current_date,))
+                result = self.cursor.fetchall()
+                if len(result) == 0:
+                    isEmpty = True
+                    print("Got no results!")
+                return result, isEmpty, isValid
             else:
-                print("watthours result for the day is", result)
-                return result
+                sql_query = """
+                    SELECT timestamp, totalDailyWattHours 
+                    FROM DailyEnergyTable 
+                    WHERE id >= (SELECT id FROM DailyEnergyTable WHERE timestamp = ?) 
+                    AND id <= (SELECT id FROM DailyEnergyTable WHERE timestamp = ?)+6
+                """
+
+                self.cursor.execute(sql_query, (start_date,start_date))
+                result = self.cursor.fetchall()
+                if len(result) == 0:
+                    isEmpty = True
+                    print("Got no results!")
+
+                return result, isEmpty, isValid
+
+        except IndexError:
+            self.insert_debug_logging_table(f'Invalid table row or column number {row} OR {column} respectively was requested')
+            if GC.DEBUG_STATEMENTS_ON: print("INSIDE INDEX ERROR")
+            return None, None, False
+
+        except sqlite3.OperationalError:
+            self.insert_debug_logging_table(f'The {tableName} table does NOT exist in EnergyReport.db or there is typo in table name')
+            if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
+            return None, None, False
+
+    def get_weekly_watthours(self, start_week_number):
+        isEmpty = False
+        isValid = True
+
+        current_date = datetime.now(timezone('CST6CDT')).strftime('%Y-%m-%d')
+        current_week_number = datetime.strptime(current_date, '%Y-%m-%d').isocalendar()[1]
+        delta = current_week_number - start_week_number
+        try:
+            if delta < 4:
+                sql_query = """
+                    SELECT totalWeeklyWattHours, weekNumber
+                    FROM WeeklyEnergyTable
+                    WHERE weekNumber >= ?
+                    AND weekNumber <= ?
+                """
+                self.cursor.execute(sql_query, (start_week_number,current_week_number,))
+                result = self.cursor.fetchall()
+                if len(result) == 0:
+                    isEmpty = True
+                    print("Got no results!")
+                return result, isEmpty, isValid
+            else:
+                sql_query = """
+                    SELECT totalWeeklyWattHours, weekNumber
+                    FROM WeeklyEnergyTable
+                    WHERE weekNumber >= ?
+                    AND weekNumber <= ?
+                """
+                self.cursor.execute(sql_query, (start_week_number,start_week_number+3,))
+                result = self.cursor.fetchall()
+                if len(result) == 0:
+                    isEmpty = True
+                    print("Got no results!")
+                return result, isEmpty, isValid
+
+
         except IndexError:
             if GC.DEBUG_STATEMENTS_ON: print("INSIDE INDEX ERROR")
-            return 0
+            return None, None, False
+
         except sqlite3.OperationalError:
             if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
-            return 0
-
-    def get_weekly_watthours(self, target_date):
-        tableName = "WeeklyEnergyTable"
-        print("target_date to query is ", target_date)
-        try:
-            sql_query = f"""
-                SELECT SUM(totalWeeklyyWattHours) AS total_watthours
-                FROM WeeklyEnergyTable
-                WHERE timestamp = ?
-            """
-            self.cursor.execute(sql_query, (target_date,))
-            result = self.cursor.fetchone()[0]
-            if result is None:
-                print("Got no results!")
-                return 0
-            else:
-                print("watthours result for the week is", result)
-                return result
-        except IndexError:
-            if GC.DEBUG_STATEMENTS_ON: print("INSIDE INDEX ERROR")
-            return 0
-        except sqlite3.OperationalError:
-            if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
-            return 0
-
-
-
-
+            return None, None, False
 
     def query_table(self, tableName: str, searchTerm: str = None, row: Optional[int]= None, column: Optional[int]= None) -> tuple:
         """ Return every row of a table from a *.db database
@@ -334,21 +413,22 @@ class Database:
         Returns:
             result: A list of tuples from a table, where each row in table is a tuple of length n
             isEmpty: Returns True if table is empty, and False otherwise
-            isValid: Returns True is table name exists in EnergyReport.db, and False otherwise
+            isValid: Returns True if table name exists in EnergyReport.db, and False otherwise
             
         """
 
         if searchTerm is None:
             sqlStatement = f"SELECT * FROM {tableName}"
         else:
-            sqlStatement = f"SELECT * FROM {tableName}"  #f"SELECT * FROM {tableName} WHERE content LIKE ?, ('%' + {str(searchTerm)} + '%',)" #self.cursor.execute("SELECT * FROM DatasetTable WHERE content LIKE ?", ('%' + str(searchTerm) + '%',))
+            sqlStatement = f"SELECT * FROM {tableName} WHERE timestamp = ?"  #f"SELECT * FROM {tableName} WHERE content LIKE ?, ('%' + {str(searchTerm)} + '%',)" #self.cursor.execute("SELECT * FROM DatasetTable WHERE content LIKE ?", ('%' + str(searchTerm) + '%',))
         
-        self.cursor.execute(sqlStatement)
+        self.cursor.execute(sqlStatement, (searchTerm, ))
 
 
         isEmpty = False
         isValid = True
-        result = self.cursor.fetchall()
+        result = self.cursor.fetchall()[0]
+
         if GC.DEBUG_STATEMENTS_ON: print("------")
         
         if len(result) == 0:

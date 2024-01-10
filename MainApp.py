@@ -18,7 +18,8 @@ __doc__        = "Simple PWA to display the cost of the electrical power measure
 ## Standard Python libraries
 import sys                                              # Determine which OS this code is running on https://docs.python.org/3/library/sys.html
 from datetime import datetime, time, timedelta      	# Manipulate calendar dates & time objects https://docs.python.org/3/library/datetime.html
-
+import pytz
+from pytz import timezone
 ## 3rd party libraries
 # A modern, fast (high-performance), web framework for building APIs with Python 3.8+
 # https://fastapi.tiangolo.com
@@ -167,8 +168,11 @@ def sense_updating(db: Database, mode: str):
     yearlyEnergyUsage = sense.yearly_usage
     timeZone = sense.time_zone
 
+    current_date = datetime.now(timezone('CST6CDT'))
+    currentDate0 = current_date.strftime("%Y-%m-%d")
+    year, month, day = current_date.year, current_date.month, current_date.day
+    currentDate = str(year) + '-' + str(month) + '-' + str(day)
 
-    
     if GC.DEBUG_STATEMENTS_ON:
         print (f"{mode} Active: {instantPower} W")
         print (f"{mode} Daily:  {dailyEnergyUsage} kWh")
@@ -176,12 +180,11 @@ def sense_updating(db: Database, mode: str):
         print (f"{mode} Monthly:  {monthlyEnergyUsage} kWh")
         print (f"{mode} Yearly:  {yearlyEnergyUsage} kWh")
         print ("Active Devices:",", ".join(sense.active_devices))
-        
-    current_date = datetime.now()
-    year, month, day = current_date.year, current_date.month, current_date.day
-    currentDate = str(year) + '-' + str(month) + '-' + str(day)    
-    db.insert_daily_energy_table(dailyEnergyUsage, GC.FACTORY_ENERGY_COST, currentDate)    #TODO call SQlite UPDATE if currentDate already exists
+        #db.insert_daily_energy_table(dailyEnergyUsage*1000, GC.FACTORY_ENERGY_COST, currentDate)
 
+
+    db.insert_daily_energy_table(dailyEnergyUsage*1000, GC.FACTORY_ENERGY_COST, currentDate)    #TODO call SQlite UPDATE if currentDate already exists
+    db.insert_weekly_energy_table(weeklyEnergyUsage*1000, GC.FACTORY_ENERGY_COST, currentDate0)
 
 if __name__ in {"__main__", "__mp_main__"}:
     # Force application to run in light mode since calendar color is bad in dark mode
@@ -196,10 +199,12 @@ if __name__ in {"__main__", "__mp_main__"}:
         app.add_static_files('/static/videos', GC.MAC_CODE_DIRECTORY + '/static/videos')
     elif sys.platform.startswith('linux'):
         try: #PRIMARY DEBIAN LINODE SERVER
-            print("Trying to deploy code on a Linode Debian server")
+            print("Trying to deploy code to the 'Sense-Energy-Gauge-Optimizer-Track Debian based Linode server")
             app.add_static_files('/static/images', '/root' + GC.LINUX_CODE_DIRECTORY + '/static/images')
             app.add_static_files('/static/videos', '/root' + GC.LINUX_CODE_DIRECTORY + '/static/videos')
-        except RuntimeError: # BACKUP MFC JUPITER SERVER RUNINNG UBUNTU
+        except RuntimeError: # BACKUP MFC JUPITER SERVER RUNNING UBUNTU
+            print("Linode Debian server failed deploying to MFC Jupiter server as hot backup")
+
             app.add_static_files('/static/images', '/home/jupiter/Apps' + GC.LINUX_CODE_DIRECTORY + '/static/images')
             app.add_static_files('/static/videos', '/home/jupiter/Apps' + GC.LINUX_CODE_DIRECTORY + '/static/videos')
 
@@ -219,7 +224,7 @@ if __name__ in {"__main__", "__mp_main__"}:
     sense.authenticate(username, password)
 
     #TODO REMOVE Since not used ui.timer(GC.UI_UPDATE_TIME, lambda: check_ui_state_machine())
-    if GC.DEBUG_STATEMENTS_ON: ui.timer(10, lambda: sense_updating(db, 'DEV'))           # Call every 10 seconds to speed up testing
+    if GC.DEBUG_STATEMENTS_ON: ui.timer(60, lambda: sense_updating(db, 'DEV'))           # Call every 60 seconds to speed up testing
     ui.timer(GC.SENSE_UPDATE_TIME, lambda: sense_updating(db, 'PROD'))                   # Limit to once every 20 mins to not hit API limits
 
     logo = ui.image('static/images/DollarGeneralEnergyLogo.png').classes('w-96 m-auto')
