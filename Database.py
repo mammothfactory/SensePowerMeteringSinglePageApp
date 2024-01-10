@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-__authors__    = ["Blaze Sanders"]
+__authors__    = ["Blaze Sanders", "Vladyslav Haverdovskyi"]
 __contact__    = "blazes@mfc.us"
 __copyright__  = "Copyright 2023"
 __license__    = "MIT License"
@@ -14,19 +14,20 @@ __version__    = "0.1.0"
 # pylint: disable=line-too-long
 # pylint: disable=invalid-name
 
-# Standard Python libraries
+## Standard Python libraries
 import sqlite3                                  # SQlite Database
 from datetime import datetime, time, timedelta 	# Manipulate calendar dates & time objects https://docs.python.org/3/library/datetime.html
 from time import sleep                          # Pause program execution
 import os                                       # Get filename information like directoty and file path
 import csv                                      # Manipulate .CSV files for data reporting
 import json                                     # Use to serialize a list of list and insert into TEXT column of SQLite database
-from typing import Optional
+from typing import Optional                     # TODO Give function argument an optional 
 
-# 3rd Party Libraries
+## 3rd party libraries
 import pytz 					                # World Timezone Definitions  https://pypi.org/project/pytz/
-from pytz import timezone
-# Internal modules
+from pytz import timezone                       # Sync data write time to database no matter where server is located https://pypi.org/project/pytz/
+
+## Internally developed modules
 import GlobalConstants as GC
 
 
@@ -90,51 +91,6 @@ class Database:
         self.commit_changes() 
 
 
-    def update_graph_table(self, selectedDate: str, timeFrame: str = WEEKLY):
-
-
-        """
-        if startDate is in weekNumber:
-            weekNum = 99
-            monthNum = 99
-        date(2003, 12, 29).isocalendar()
-        
-        
-        if self.is_date_between(self, startDatetimeObj, endDatetimeObj, selectedDate):
-            pass
-        # idPrimaryKeyToUpdate = ???
-        #
-        # energy = ???
-        
-
-        if timeFrame == GC.RADIO_BUTTON_VALUES[0]: #WEEKLY
-            self.cursor.execute("UPDATE WeekGraphTable SET wattHours = ?, weekNumber = ?, WHERE id = ?", (energy, weekNum,idPrimaryKeyToUpdate))
-        else:
-            self.cursor.execute("UPDATE MonthGraphTable SET wattHours = ?, weekNumber = ?, WHERE id = ?", (energy, monthNum, idPrimaryKeyToUpdate))
-        
-        zero = 0
-
-        result = -1 # TODO
-        dateToCalulate = startDate.isoformat(timespec="minutes")[0:10]
-        finalResult = list(filter(lambda t: t[GC.TIMESTAMP_COLUMN_NUMBER].startswith(dateToCalulate), result))
-
-        if timeFrame == Database.WEEKLY:
-            calculatedWeekNumber = 1 # TODO DATETIME MAGIC
-            calculatedWattHours = 1  # TODO SUM finalResult data
-            self.cursor.execute("UPDATE WeeklyGraphTable SET wattHours = ?, weekNumber = ? WHERE id = ?", (id, calculatedWattHours, calculatedWeekNumber))
-        elif timeFrame == Database.MONTHLY:
-            pass
-        else:
-            print("ERROR")
-#        users = db.query_table("UsersTable")
-#
-#        for data in users:
-#            employeeID = data[GC.EMPLOYEE_ID_COLUMN_NUMBER]
-#            name = data[GC.FIRST_NAME_COLUMN_NUMBER] + " " + data[GC.LAST_NAME_COLUMN_NUMBER]
-#            self.cursor.execute("INSERT INTO WeeklyReportTable (fullname, employeeId, totalHours, day6, day0, day1, day2, day3, day4, day5, inComments, outComments) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (name, employeeID, zero, zero, zero, zero, zero, zero, zero, zero, "Missed: ", "Missed:"))
-         """
-
-
     def commit_changes(self):
         """ Commit data inserted into a table to the *.db database file
         """
@@ -165,29 +121,6 @@ class Database:
             #print('Daylight Savings')
 
         return now
-
-
-    # def example_tables(self):
-    #     """ As define by a 1/60 Hz polling rate of DailyEnergyTable, once every 24 hours polling rate for WeeklyEnergyTable, and once per week polling rate for MonthlyEnergyTable
-    #     """
-    #     lastIndexInserted = self.insert_daily_energy_table(200, 0.11, "2024-01-01")
-    #     if GC.DEBUG_STATEMENTS_ON: print(f"LAST DATABASE INDEX INSERTED OR UPDATED WAS: {lastIndexInserted}")
-    #     lastIndexInserted = self.insert_daily_energy_table(220, 0.11, "2024-01-01")
-    #     if GC.DEBUG_STATEMENTS_ON: print(f"LAST DATABASE INDEX INSERTED OR UPDATED WAS: {lastIndexInserted}")
-    #
-    #
-    #     self.insert_weekly_energy_table(4800, 0.11, "2024-01-01T12:00:00")
-    #     self.insert_weekly_energy_table(5280, 0.11, "2024-01-02T12:00:00")
-    #     self.insert_weekly_energy_table(4800, 0.11, "2024-01-03T12:00:00")
-    #     self.insert_weekly_energy_table(5280, 0.11, "2024-01-04T12:00:00")
-    #     self.insert_weekly_energy_table(4800, 0.11, "2024-01-05T12:00:00")
-    #     self.insert_weekly_energy_table(5280, 0.11, "2024-01-06T12:00:00")
-    #     self.insert_weekly_energy_table(4800, 0.11, "2024-01-07T12:00:00")
-    #
-    #     self.insert_monthly_energy_table(33360, 0.11, "2024-01-07T23:59:00")
-    #     self.insert_monthly_energy_table(36960, 0.11, "2024-01-14T23:59:00")
-    #     self.insert_monthly_energy_table(33360, 0.11, "2024-01-21T23:59:00")
-    #     self.insert_monthly_energy_table(36960, 0.11, "2024-01-28T23:59:00")
 
 
     def insert_daily_energy_table(self, energy: int, cost: float, date: str) -> int:
@@ -358,6 +291,7 @@ class Database:
             if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
             return None, None, False
 
+
     def get_weekly_watthours(self, start_week_number):
         isEmpty = False
         isValid = True
@@ -401,6 +335,7 @@ class Database:
         except sqlite3.OperationalError:
             if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
             return None, None, False
+
 
     def query_table(self, tableName: str, searchTerm: str = None, row: Optional[int]= None, column: Optional[int]= None) -> tuple:
         """ Return every row of a table from a *.db database
@@ -594,15 +529,16 @@ if __name__ == "__main__":
     results = db.query_table("DailyEnergyTable", isoDateDay)
     if GC.DEBUG_STATEMENTS_ON: print(results)
     
-    #results = db.query_table("DailyEnergyTable", "2024-01-01")
-    #if GC.DEBUG_STATEMENTS_ON: print(results)
-    
-    #db.export_table_to_csv(["DailyEnergyTable", "WeeklyEnergyTable", "MonthlyEnergyTable", "WeekGraphTable", "MonthGraphTable", "DebugLoggingTable"])
-    
     """
+    results = db.query_table("DailyEnergyTable", "2024-01-01")
+    if GC.DEBUG_STATEMENTS_ON: print(results)
+    
+    db.export_table_to_csv(["DailyEnergyTable", "WeeklyEnergyTable", "MonthlyEnergyTable", "WeekGraphTable", "MonthGraphTable", "DebugLoggingTable"])
+    
     insertErrors = db.insert_check_in_table(1001)
     print(insertErrors)
     checkOutErrors = db.insert_check_out_table(1001)
     print(insertErrors)
     """
+    
     db.close_database()

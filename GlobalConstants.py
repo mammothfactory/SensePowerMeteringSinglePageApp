@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-__authors__    = ["Blaze Sanders"]
+__authors__    = ["Blaze Sanders", "Vladyslav Haverdovskyi"]
 __contact__    = "blazes@mfc.us"
 __copyright__  = "Copyright 2023"
 __license__    = "MIT License"
@@ -9,7 +9,7 @@ __deprecated__ = False
 __version__    = "0.1.0"
 __doc__        = "CONSTANTS for both LiteHouse and Lustron home configurations"
 """
-
+FAKE_SCALE = 4          #TODO REMOVE THIS FROM MainApp.py ASAP :)
 
 # Physical equipment at Marianna factory 
 WORKING_LED_LIGHTS = 154
@@ -43,6 +43,7 @@ DOLLAR_STORE_LOGO_GREEN = '#8EE511'
 MAX_GRAPH_PERCENTAGE = 100                              # Units are in percentage
 RADIO_BUTTON_VALUES = ['WEEK VIEW','MONTH VIEW']
 FACTORY_ENERGY_COST = 0.11                              # Units are US Dollars
+ONE_KILO_PIXELS = 1000.0                                 # Units are 
 
 # NiceGUI ui.timer() CONSTANTS
 ONE_SECOND = 1                                          # 1 second
@@ -51,8 +52,8 @@ CLOCK_UPDATE_TIME = 60 * ONE_SECOND                     # 60 seconds
 LABEL_UPDATE_TIME = 4 * ONE_SECOND                      # 4 seconds
 DATABASE_DAILY_REPORT_UPDATE_TIME  = 12 * ONE_HOUR      # 12 hours
 DATABASE_WEEKLY_REPORT_UPDATE_TIME =  4 * ONE_HOUR      # 4 hours
-SENSE_UPDATE_TIME = 1 * ONE_HOUR                # 1 hour
-UI_UPDATE_TIME = 0.5 * ONE_HOUR                                    # 30 minutes
+SENSE_UPDATE_TIME = 1 * ONE_HOUR                        # 1 hour
+UI_UPDATE_TIME = 0.5 * ONE_HOUR                         # 30 minutes
 
 # DateTime Object CONSTANTS
 MONDAY = 0

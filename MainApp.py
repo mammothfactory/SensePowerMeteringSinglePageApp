@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-__authors__    = ["Blaze Sanders"]
+__authors__    = ["Blaze Sanders", "Vladyslav Haverdovskyi"]
 __contact__    = "blazes@mfc.us"
 __copyright__  = "Copyright 2023"
 __license__    = "MIT License"
@@ -18,13 +18,13 @@ __doc__        = "Simple PWA to display the cost of the electrical power measure
 ## Standard Python libraries
 import sys                                              # Determine which OS this code is running on https://docs.python.org/3/library/sys.html
 from datetime import datetime, time, timedelta      	# Manipulate calendar dates & time objects https://docs.python.org/3/library/datetime.html
-import pytz
-from pytz import timezone
+import pytz                                             # Sync data write time to database no matter where server is located https://pypi.org/project/pytz/
+from pytz import timezone       
 
 ## 3rd party libraries
 # A modern, fast (high-performance), web framework for building APIs with Python 3.8+
 # https://fastapi.tiangolo.com
-from fastapi import FastAPI                             # Used to connect to UI to the unoffical Sense API https://github.com/scottbonline/sense
+from fastapi import FastAPI                             # TODO REMOVE? Used to connect to UI to the unoffical Sense API https://github.com/scottbonline/sense
 
 # Browser based GUI framework to build and display a user interface on mobile, PC, and Mac
 # https://nicegui.io/
@@ -55,12 +55,6 @@ totalEnergy = 0                             # Units are kWh
 selectedView = GC.RADIO_BUTTON_VALUES[0]    # State of radio buttons which defines how energy graph is displayed
 canUpdateweeklyReportTable = True           # TODO
 
-
-"""TODO Connect to https://github.com/scottbonline/sense
-@app.get('/')
-def root():
-    return totalEnergy
-"""
 
 """TODO If Dollar General needs .csv output instead of just website GUI they could screenshot for their bosses (replace ''' if uncommented)
 def generate_report(db: Database):
@@ -98,7 +92,7 @@ def search_button_click(db: Database, selectedView: GC):
     closeGraphButton.visible = True
     totalCostLabel.visible = True
     graph.set_content(UserInterface.build_svg_graph(db, dateSelected, selectedView))
-    totalCostLabel.set_text(f"The total cost for this {selectedView} is {round(GC.FACTORY_ENERGY_COST * UserInterface.total_kilowatthours_in_weekly_mode,2)} USD")
+    totalCostLabel.set_text(f"The total cost for this {selectedView} is {round(GC.FACTORY_ENERGY_COST * UserInterface.total_kilowatthours_in_weekly_mode * GC.WORKING_LED_LIGHTS,2)} USD")
 
 
 def close_graph_button_click():
@@ -124,11 +118,10 @@ def get_radio_button_state(e: str):
 
     if selectedView == 'WEEK VIEW':
         totalEnergy = UserInterface.total_kilowatthours_in_weekly_mode
-        totalCostLabel.set_text(f"The total cost for this {selectedView} is {round(GC.FACTORY_ENERGY_COST * totalEnergy, 2)} USD")
+        totalCostLabel.set_text(f"The total cost for this {selectedView} is {round(GC.FACTORY_ENERGY_COST * totalEnergy * GC.WORKING_LED_LIGHTS, 2)} USD")
     else:
         totalEnergy = UserInterface.total_kilowatthours_in_monthly_mode
-        totalCostLabel.set_text(f"The total cost for this {selectedView} is {round(GC.FACTORY_ENERGY_COST * totalEnergy, 2)} USD")
-
+        totalCostLabel.set_text(f"The total cost for this {selectedView} is {round(GC.FACTORY_ENERGY_COST * totalEnergy * GC.WORKING_LED_LIGHTS * GC.FAKE_SCALE , 2)} USD")
 
     graph.set_content(UserInterface.build_svg_graph(db, dateSelected, selectedView))
 
@@ -143,26 +136,6 @@ def get_date_selected(e: str):
     global dateSelected
     dateSelected = e
     if (GC.DEBUG_STATEMENTS_ON): print(f"DateSelected variable was updated: {dateSelected}")
-
-
-""" TODO Remove if adding SQlite database and FastAPI code doesn't require a State Machine
-def check_ui_state_machine():
-    ''' Simple state machine to describe the GUI
-        State 0 means TODO
-        State 1 means TODO
-        State 2 means TODO
-    '''
-    global currentGuiState
-
-    if calendarElement.visible == True and searchButton.visible == True:
-        newState = 0
-    elif calendarElement.visible == False and searchButton.visible == False:
-        newState = 1
-    else:
-        newState = 2
-
-    currentGuiState = newState
-"""
 
 
 def sense_updating(db: Database, mode: str):
@@ -190,10 +163,8 @@ def sense_updating(db: Database, mode: str):
         print (f"{mode} Monthly:  {monthlyEnergyUsage} kWh")
         print (f"{mode} Yearly:  {yearlyEnergyUsage} kWh")
         print ("Active Devices:",", ".join(sense.active_devices))
-        #db.insert_daily_energy_table(dailyEnergyUsage*1000, GC.FACTORY_ENERGY_COST, currentDate)
 
-
-    db.insert_daily_energy_table(dailyEnergyUsage*1000, GC.FACTORY_ENERGY_COST, currentDate)    #TODO call SQlite UPDATE if currentDate already exists
+    db.insert_daily_energy_table(dailyEnergyUsage*1000, GC.FACTORY_ENERGY_COST, currentDate) 
     db.insert_weekly_energy_table(weeklyEnergyUsage*1000, GC.FACTORY_ENERGY_COST, currentDate0)
 
 if __name__ in {"__main__", "__mp_main__"}:
@@ -233,7 +204,6 @@ if __name__ in {"__main__", "__mp_main__"}:
     password = config['SENSE_PASSWORD']
     sense.authenticate(username, password)
 
-    #TODO REMOVE Since not used ui.timer(GC.UI_UPDATE_TIME, lambda: check_ui_state_machine())
     if GC.DEBUG_STATEMENTS_ON: ui.timer(60, lambda: sense_updating(db, 'DEV'))           # Call every 60 seconds to speed up testing
     ui.timer(GC.SENSE_UPDATE_TIME, lambda: sense_updating(db, 'PROD'))                   # Limit to once every 20 mins to not hit API limits
 
@@ -269,7 +239,7 @@ if __name__ in {"__main__", "__mp_main__"}:
             ui.icon('close')
 
 
-    totalCostLabel = ui.label(f"The total cost for this {selectedView} is {GC.FACTORY_ENERGY_COST * totalEnergy} USD").style("color: #001b36; font-size: 300%; font-weight: 300").classes("self-center")
+    totalCostLabel = ui.label(f"The total cost for this {selectedView} is {GC.FACTORY_ENERGY_COST * totalEnergy * GC.WORKING_LED_LIGHTS} USD").style("color: #001b36; font-size: 300%; font-weight: 300").classes("self-center")
     totalCostLabel.visible = False
     
     ui.run(native=GC.RUN_ON_NATIVE_OS, port=GC.LOCAL_HOST_PORT_FOR_GUI)
