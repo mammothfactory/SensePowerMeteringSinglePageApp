@@ -349,13 +349,11 @@ class Database:
                 return result, isEmpty, isValid
 
         except IndexError:
-            self.insert_debug_logging_table(f'Invalid table row or column number {row} OR {column} respectively was requested')
-            if GC.DEBUG_STATEMENTS_ON: print("INSIDE INDEX ERROR")
+            if GC.DEBUG_STATEMENTS_ON: self.insert_debug_logging_table("INSIDE INDEX ERROR")
             return None, None, False
 
         except sqlite3.OperationalError:
-            self.insert_debug_logging_table(f'The {tableName} table does NOT exist in EnergyReport.db or there is typo in table name')
-            if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
+            if GC.DEBUG_STATEMENTS_ON: self.insert_debug_logging_table(f"INSIDE OPERATIONAL ERROR")
             return None, None, False
 
     def get_weekly_watthours(self, start_week_number):
@@ -395,11 +393,11 @@ class Database:
 
 
         except IndexError:
-            if GC.DEBUG_STATEMENTS_ON: print("INSIDE INDEX ERROR")
+            if GC.DEBUG_STATEMENTS_ON: self.insert_debug_logging_table("INSIDE INDEX ERROR")
             return None, None, False
 
         except sqlite3.OperationalError:
-            if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
+            if GC.DEBUG_STATEMENTS_ON: self.insert_debug_logging_table("INSIDE OPERATIONAL ERROR")
             return None, None, False
 
     def query_table(self, tableName: str, searchTerm: str = None, row: Optional[int]= None, column: Optional[int]= None) -> tuple:
@@ -429,7 +427,7 @@ class Database:
         isValid = True
         result = self.cursor.fetchall()[0]
 
-        if GC.DEBUG_STATEMENTS_ON: print("------")
+        if GC.DEBUG_STATEMENTS_ON: print("-------------------------")
         
         if len(result) == 0:
             isEmpty = True
@@ -448,13 +446,11 @@ class Database:
                     return result[row-1][column], isEmpty, isValid
                   
         except IndexError:
-            self.insert_debug_logging_table(f'Invalid table row or column number {row} OR {column} respectively was requested')
-            if GC.DEBUG_STATEMENTS_ON: print("INSIDE INDEX ERROR")
+            if GC.DEBUG_STATEMENTS_ON: self.insert_debug_logging_table("INSIDE INDEX ERROR")
             return None, None, False
         
         except sqlite3.OperationalError:
-            self.insert_debug_logging_table(f'The {tableName} table does NOT exist in EnergyReport.db or there is typo in table name')
-            if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
+            if GC.DEBUG_STATEMENTS_ON: self.insert_debug_logging_table(f"INSIDE OPERATIONAL ERROR")
             return None, None, False
 
 
@@ -593,7 +589,7 @@ if __name__ == "__main__":
           
     results = db.query_table("DailyEnergyTable", isoDateDay)
     if GC.DEBUG_STATEMENTS_ON: print(results)
-    
+
     #results = db.query_table("DailyEnergyTable", "2024-01-01")
     #if GC.DEBUG_STATEMENTS_ON: print(results)
     

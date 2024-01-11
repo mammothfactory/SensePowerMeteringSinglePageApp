@@ -43,6 +43,9 @@ DOLLAR_STORE_LOGO_GREEN = '#8EE511'
 MAX_GRAPH_PERCENTAGE = 100                              # Units are in percentage
 RADIO_BUTTON_VALUES = ['WEEK VIEW','MONTH VIEW']
 FACTORY_ENERGY_COST = 0.11                              # Units are US Dollars
+Y_PIXELS_HEIGHT_IN_GRAPH = 1000
+DAILY_WATTHOURS_MAX_IN_GRAPH = 7000.0
+WEEKLY_WATTHOURS_MAX_IN_GRAPH = 40000.0
 
 # NiceGUI ui.timer() CONSTANTS
 ONE_SECOND = 1                                          # 1 second

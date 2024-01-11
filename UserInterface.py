@@ -46,11 +46,11 @@ def set_background(color: str) -> None:
     ui.query('body').style(f'background-color: {color}')
 
 def get_graph_value_per_day(watthours_per_day):
-    graph_value_per_day = float(watthours_per_day)/7000.0*1000.0 ## 7000 and 1000 must be replaced with Global constants
+    graph_value_per_day = float(watthours_per_day)/GC.DAILY_WATTHOURS_MAX_IN_GRAPH*GC.Y_PIXELS_HEIGHT_IN_GRAPH
     return graph_value_per_day
 
 def get_graph_value_per_week(weekly_watthours_):
-    graph_value_per_week = float(weekly_watthours_)/30000.0*1000.0
+    graph_value_per_week = float(weekly_watthours_)/GC.WEEKLY_WATTHOURS_MAX_IN_GRAPH*GC.Y_PIXELS_HEIGHT_IN_GRAPH
     return graph_value_per_week
 
 def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
