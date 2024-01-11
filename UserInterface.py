@@ -15,8 +15,8 @@ __version__    = "0.1.0"
 # pylint: disable=invalid-name
 
 ## Standard Python Libraries
-from datetime import datetime, time, timedelta    # Manipulate calendar dates & time objects https://docs.python.org/3/library/datetime.>
-from pytz import timezone                         # Sync data write time to database no matter where server is located https://pypi.org/project/pytz/
+from datetime import datetime, time, timedelta     # Manipulate calendar dates & time objects https://docs.python.org/3/library/datetime.>
+from pytz import timezone                          # Sync data write time to database no matter where server is located https://pypi.org/project/pytz/
 
 ## 3rd party libraries
 from nicegui import ui, app                        # Web base GUI framework
@@ -45,20 +45,12 @@ def set_background(color: str) -> None:
 
 
 def get_graph_value_per_day(watthours_per_day):
-<<<<<<< HEAD
     graph_value_per_day = float(watthours_per_day)/GC.DAILY_WATTHOURS_MAX_IN_GRAPH*GC.Y_PIXELS_HEIGHT_IN_GRAPH
-=======
-    graph_value_per_day = float(watthours_per_day)/7000.0*1000.0   ## TODO 7000 and 1000 must be replaced with Global constants: MAYBE GC.ONE_KILO_PIXELS???
->>>>>>> 209d86a05c00c7ce5bdc4d7d41fd8b3f8eda94c7
     return graph_value_per_day
 
 
 def get_graph_value_per_week(weekly_watthours_):
-<<<<<<< HEAD
     graph_value_per_week = float(weekly_watthours_)/GC.WEEKLY_WATTHOURS_MAX_IN_GRAPH*GC.Y_PIXELS_HEIGHT_IN_GRAPH
-=======
-    graph_value_per_week = float(weekly_watthours_)/30000.0*1000.0 ## TODO Why 30K?
->>>>>>> 209d86a05c00c7ce5bdc4d7d41fd8b3f8eda94c7
     return graph_value_per_week
 
 
@@ -88,13 +80,13 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
     last_timestamp = ''
     try:
         last_timestamp = timestamp_array[-1]
-        
+
     except IndexError:
-        if GC.DEBUG_STATEMENTS_ON: print(f"The daily_watthours Tuple was empty. User probably selected a date in the future!")    
-        if GC.DEBUG_STATEMENTS_ON: print(f"Building a watthours_array and weekly_watthours_array filled with 0 wH values.")    
+        if GC.DEBUG_STATEMENTS_ON: print(f"The daily_watthours Tuple was empty. User probably selected a date in the future!")
+        if GC.DEBUG_STATEMENTS_ON: print(f"Building a watthours_array and weekly_watthours_array filled with 0 wH values.")
         last_timestamp = selectedDate.split('-')[0]+'-'+selectedDate.split('-')[1]+'-'+str(int(selectedDate.split('-')[2]))
-    
-    finally: 
+
+    finally:
         if len(watthours_array) < 7:
             for i in range(0, 7-len(watthours_array)):
                 watthours_array.append(0)
@@ -125,7 +117,7 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
         return f'''
             <svg width="700" height={graph_height} viewBox="-100 -50 800 1100" xmlns="http://www.w3.org/2000/svg">
                 <title>Weekly Energy Consumption Bar Graph</title>
-        
+
                 <!-- Draw the data points first so that the axis black lines are visible -->
                 <line x1="50"  y1="1000" x2="50"  y2={graph_height-daily_graph_values[0]} stroke="grey" stroke-width="100"/>
                 <line x1="150" y1="1000" x2="150" y2={graph_height-daily_graph_values[1]}  stroke="green" stroke-width="100"/>
@@ -143,7 +135,7 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
                 <text x="450" y="1050" text-anchor="middle">{timestamp_array[4]}</text>
                 <text x="550" y="1050" text-anchor="middle">{timestamp_array[5]}</text>
                 <text x="650" y="1050" text-anchor="middle">{timestamp_array[6]}</text>
-          
+
                 <!-- Y-Axis Labels TODO CHECK MULTIPLYING TEXT BY 154 = GC.WORKING_LED_LIGHTS IS VALID??? -->
                 <text x="-10" y="0"       text-anchor="end">1078 kWh</text>
                 <text x="-10" y="142.85"  text-anchor="end">924 kWh</text>
@@ -153,22 +145,21 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
                 <text x="-10" y="714.25"  text-anchor="end">308 kWh</text>
                 <text x="-10" y="857.1"   text-anchor="end">154 kWh</text>
                 <text x="-10" y="1000"    text-anchor="end">0 kWh</text>
-           
+
                 <!-- X-axis Line -->
                 <line x1="0" y1="1000" x2="700" y2="1000" stroke="black" stroke-width="3"/>
-                
+
                 <!-- Y-axis Line -->
                 <line x1="0" y1="0" x2="0" y2="1000" stroke="black" stroke-width="3"/>
-        
             </svg>
         '''
-        
+
     if selectedView == 'MONTH VIEW':
         SHOW_NO_DATA = 0
         return f'''
             <svg width="700" height={graph_height} viewBox="-100 -50 800 1100" xmlns="http://www.w3.org/2000/svg">
                 <title>Monthly Energy Consumption Bar Graph</title>
-        
+
                 <!-- Draw the data points first so that the axis black lines are visible -->
                 <line x1="50"  y1="1000" x2="50"  y2={graph_height-SHOW_NO_DATA}           stroke="grey"   stroke-width="100"/>
                 <line x1="150" y1="1000" x2="150" y2={graph_height-weekly_graph_values[0]} stroke="green"  stroke-width="100"/>
@@ -176,14 +167,14 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
                 <line x1="350" y1="1000" x2="350" y2={graph_height-SHOW_NO_DATA}           stroke="black"  stroke-width="100"/>
                 <line x1="450" y1="1000" x2="450" y2={graph_height-weekly_graph_values[2]} stroke="yellow" stroke-width="100"/>
                 <line x1="550" y1="1000" x2="550" y2={graph_height-weekly_graph_values[3]} stroke="green"  stroke-width="100"/>
-                <line x1="650" y1="1000" x2="650" y2={graph_height-SHOW_NO_DATA}           stroke="orange" stroke-width="100"/>   
-        
+                <line x1="650" y1="1000" x2="650" y2={graph_height-SHOW_NO_DATA}           stroke="orange" stroke-width="100"/>
+
                 <!-- X-Axis Labels with 50, 350, and 650 left blank on purpose to center data -->
                 <text x="150" y="1050" text-anchor="middle">1st Week</text>
                 <text x="250" y="1050" text-anchor="middle">2nd Week</text>
                 <text x="450" y="1050" text-anchor="middle">3rd Week</text>
                 <text x="540" y="1050" text-anchor="middle">4th Week</text>
-          
+
                 <!-- Y-Axis Labels COPY OF WEEK VIEW ABOVE * 7 TODO CHECK MULTIPLYING TEXT BY 150 IS VALID??? -->
                 <text x="-10" y="0"       text-anchor="end">7546 kWh</text>
                 <text x="-10" y="142.85"  text-anchor="end">6468 kWh</text>
@@ -193,16 +184,15 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
                 <text x="-10" y="714.25"  text-anchor="end">2156 kWh</text>
                 <text x="-10" y="857.1"   text-anchor="end">1078 kWh</text>
                 <text x="-10" y="1000"    text-anchor="end">0 kWh</text>
-           
-        
+
                 <!-- X-axis Line -->
                 <line x1="0" y1="1000" x2="700" y2="1000" stroke="black" stroke-width="3"/>
-                
+
                 <!-- Y-axis -->
                 <line x1="0" y1="0" x2="0" y2="1000" stroke="black" stroke-width="3"/>
-        
             </svg>
         '''
+
 
 if __name__ == "__main__":
     print("1")
