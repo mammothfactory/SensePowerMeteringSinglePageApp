@@ -71,18 +71,28 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
 
     daily_watthours = db.get_daily_watthours(selected_date)[0]
     weekly_watthours = db.get_weekly_watthours(selected_week_number)[0]
+    if GC.DEBUG_STATEMENTS_ON: print(f"Daily wH: {daily_watthours} & Weekly wH: {weekly_watthours}")
 
     watthours_array = [o[1] for o in daily_watthours]
     weekly_watthours_array = [o[0] for o in weekly_watthours]
 
     timestamp_array = [o[0] for o in daily_watthours]
-    last_timestamp = timestamp_array[-1]
-
-    if len(watthours_array) < 7:
-        for i in range(0, 7-len(watthours_array)):
-            watthours_array.append(0)
-            additional_timestamp = last_timestamp.split('-')[0]+'-'+last_timestamp.split('-')[1]+'-'+str(int(last_timestamp.split('-')[2])+i+1)
-            timestamp_array.append(additional_timestamp)
+    last_timestamp = ''
+    try:
+        last_timestamp = timestamp_array[-1]
+        
+    except IndexError:
+        if GC.DEBUG_STATEMENTS_ON: print(f"The daily_watthours Tuple was empty. User probably selected a date in the future!")    
+        if GC.DEBUG_STATEMENTS_ON: print(f"Building a watthours_array and weekly_watthours_array filled with 0 wH values.")    
+        last_timestamp = selectedDate.split('-')[0]+'-'+selectedDate.split('-')[1]+'-'+str(int(selectedDate.split('-')[2]))
+    
+    finally: 
+        if len(watthours_array) < 7:
+            for i in range(0, 7-len(watthours_array)):
+                watthours_array.append(0)
+                weekly_watthours_array.append(0)
+                additional_timestamp = last_timestamp.split('-')[0]+'-'+last_timestamp.split('-')[1]+'-'+str(int(last_timestamp.split('-')[2])+i+1)
+                timestamp_array.append(additional_timestamp)
 
     for watthours in watthours_array:
         daily_graph_values.append(get_graph_value_per_day(watthours))
