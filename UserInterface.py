@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-__authors__    = ["Blaze Sanders"]
+__authors__    = ["Blaze Sanders", "Vladyslav Haverdovskyi"]
 __contact__    = "blazes@mfc.us"
 __copyright__  = "Copyright 2023"
 __license__    = "MIT License"
@@ -14,22 +14,20 @@ __version__    = "0.1.0"
 # pylint: disable=line-too-long
 # pylint: disable=invalid-name
 
-# Standard Python Libraries
-from datetime import datetime, time, timedelta  # Manipulate calendar dates & time objects https://docs.python.org/3/library/datetime.>
-from pytz import timezone
+## Standard Python Libraries
+from datetime import datetime, time, timedelta    # Manipulate calendar dates & time objects https://docs.python.org/3/library/datetime.>
+from pytz import timezone                         # Sync data write time to database no matter where server is located https://pypi.org/project/pytz/
 
-# 3rd Party Libraries
-from nicegui import ui, app                             # Web base GUI framework
-from fastapi import FastAPI                             # Web Server at: uvicorn MainApp:app --reload --port 8000
+## 3rd party libraries
+from nicegui import ui, app                        # Web base GUI framework
+from fastapi import FastAPI                        # Web Server at: uvicorn MainApp:app --reload --port 8000
 
-# Internal Libraries
-from Database import Database
-
-import GlobalConstants as GC
+## Internally developed modules
+from Database import Database                      # Store non-Personally Identifiable Information in local (to server) SQlite database
+import GlobalConstants as GC                       # Useful global constants used across multiple files
 
 # Global variables for cost label
 total_kilowatthours_in_weekly_mode = 0.0
-
 total_kilowatthours_in_monthly_mode = 0.0
 
 
@@ -45,13 +43,24 @@ def init(fastApiApp: FastAPI) -> None:
 def set_background(color: str) -> None:
     ui.query('body').style(f'background-color: {color}')
 
+
 def get_graph_value_per_day(watthours_per_day):
+<<<<<<< HEAD
     graph_value_per_day = float(watthours_per_day)/GC.DAILY_WATTHOURS_MAX_IN_GRAPH*GC.Y_PIXELS_HEIGHT_IN_GRAPH
+=======
+    graph_value_per_day = float(watthours_per_day)/7000.0*1000.0   ## TODO 7000 and 1000 must be replaced with Global constants: MAYBE GC.ONE_KILO_PIXELS???
+>>>>>>> 209d86a05c00c7ce5bdc4d7d41fd8b3f8eda94c7
     return graph_value_per_day
 
+
 def get_graph_value_per_week(weekly_watthours_):
+<<<<<<< HEAD
     graph_value_per_week = float(weekly_watthours_)/GC.WEEKLY_WATTHOURS_MAX_IN_GRAPH*GC.Y_PIXELS_HEIGHT_IN_GRAPH
+=======
+    graph_value_per_week = float(weekly_watthours_)/30000.0*1000.0 ## TODO Why 30K?
+>>>>>>> 209d86a05c00c7ce5bdc4d7d41fd8b3f8eda94c7
     return graph_value_per_week
+
 
 def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
     """ Create an 1920 x 1080 graph in HTML / SVG
@@ -70,18 +79,28 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
 
     daily_watthours = db.get_daily_watthours(selected_date)[0]
     weekly_watthours = db.get_weekly_watthours(selected_week_number)[0]
+    if GC.DEBUG_STATEMENTS_ON: print(f"Daily wH: {daily_watthours} & Weekly wH: {weekly_watthours}")
 
     watthours_array = [o[1] for o in daily_watthours]
     weekly_watthours_array = [o[0] for o in weekly_watthours]
 
     timestamp_array = [o[0] for o in daily_watthours]
-    last_timestamp = timestamp_array[-1]
-
-    if len(watthours_array) < 7:
-        for i in range(0, 7-len(watthours_array)):
-            watthours_array.append(0)
-            additional_timestamp = last_timestamp.split('-')[0]+'-'+last_timestamp.split('-')[1]+'-'+str(int(last_timestamp.split('-')[2])+i+1)
-            timestamp_array.append(additional_timestamp)
+    last_timestamp = ''
+    try:
+        last_timestamp = timestamp_array[-1]
+        
+    except IndexError:
+        if GC.DEBUG_STATEMENTS_ON: print(f"The daily_watthours Tuple was empty. User probably selected a date in the future!")    
+        if GC.DEBUG_STATEMENTS_ON: print(f"Building a watthours_array and weekly_watthours_array filled with 0 wH values.")    
+        last_timestamp = selectedDate.split('-')[0]+'-'+selectedDate.split('-')[1]+'-'+str(int(selectedDate.split('-')[2]))
+    
+    finally: 
+        if len(watthours_array) < 7:
+            for i in range(0, 7-len(watthours_array)):
+                watthours_array.append(0)
+                weekly_watthours_array.append(0)
+                additional_timestamp = last_timestamp.split('-')[0]+'-'+last_timestamp.split('-')[1]+'-'+str(int(last_timestamp.split('-')[2])+i+1)
+                timestamp_array.append(additional_timestamp)
 
     for watthours in watthours_array:
         daily_graph_values.append(get_graph_value_per_day(watthours))
@@ -125,14 +144,14 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
                 <text x="550" y="1050" text-anchor="middle">{timestamp_array[5]}</text>
                 <text x="650" y="1050" text-anchor="middle">{timestamp_array[6]}</text>
           
-                <!-- Y-Axis Labels -->
-                <text x="-10" y="0"       text-anchor="end">7 kWh</text>
-                <text x="-10" y="142.85"  text-anchor="end">6 kWh</text>
-                <text x="-10" y="285.70"  text-anchor="end">5 kWh</text>
-                <text x="-10" y="428.55"  text-anchor="end">4 kWh</text>
-                <text x="-10" y="571.40"  text-anchor="end">3 kWh</text>
-                <text x="-10" y="714.25"  text-anchor="end">2 kWh</text>
-                <text x="-10" y="857.1"   text-anchor="end">1 kWh</text>
+                <!-- Y-Axis Labels TODO CHECK MULTIPLYING TEXT BY 154 = GC.WORKING_LED_LIGHTS IS VALID??? -->
+                <text x="-10" y="0"       text-anchor="end">1078 kWh</text>
+                <text x="-10" y="142.85"  text-anchor="end">924 kWh</text>
+                <text x="-10" y="285.70"  text-anchor="end">770 kWh</text>
+                <text x="-10" y="428.55"  text-anchor="end">616 kWh</text>
+                <text x="-10" y="571.40"  text-anchor="end">462 kWh</text>
+                <text x="-10" y="714.25"  text-anchor="end">308 kWh</text>
+                <text x="-10" y="857.1"   text-anchor="end">154 kWh</text>
                 <text x="-10" y="1000"    text-anchor="end">0 kWh</text>
            
                 <!-- X-axis Line -->
@@ -165,14 +184,14 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
                 <text x="450" y="1050" text-anchor="middle">3rd Week</text>
                 <text x="540" y="1050" text-anchor="middle">4th Week</text>
           
-                <!-- Y-Axis Labels COPY OF WEEK VIEW ABOVE -->
-                <text x="-10" y="0"       text-anchor="end">49 kWh</text>
-                <text x="-10" y="142.85"  text-anchor="end">42 kWh</text>
-                <text x="-10" y="285.70"  text-anchor="end">35 kWh</text>
-                <text x="-10" y="428.55"  text-anchor="end">28 kWh</text>
-                <text x="-10" y="571.40"  text-anchor="end">21 kWh</text>
-                <text x="-10" y="714.25"  text-anchor="end">14 kWh</text>
-                <text x="-10" y="857.1"   text-anchor="end">7 kWh</text>
+                <!-- Y-Axis Labels COPY OF WEEK VIEW ABOVE * 7 TODO CHECK MULTIPLYING TEXT BY 150 IS VALID??? -->
+                <text x="-10" y="0"       text-anchor="end">7546 kWh</text>
+                <text x="-10" y="142.85"  text-anchor="end">6468 kWh</text>
+                <text x="-10" y="285.70"  text-anchor="end">5390 kWh</text>
+                <text x="-10" y="428.55"  text-anchor="end">4312 kWh</text>
+                <text x="-10" y="571.40"  text-anchor="end">3234 kWh</text>
+                <text x="-10" y="714.25"  text-anchor="end">2156 kWh</text>
+                <text x="-10" y="857.1"   text-anchor="end">1078 kWh</text>
                 <text x="-10" y="1000"    text-anchor="end">0 kWh</text>
            
         
@@ -184,7 +203,6 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
         
             </svg>
         '''
-
 
 if __name__ == "__main__":
     print("1")
