@@ -26,7 +26,7 @@ from fastapi import FastAPI                        # Web Server at: uvicorn Main
 from Database import Database                      # Store non-Personally Identifiable Information in local (to server) SQlite database
 import GlobalConstants as GC                       # Useful global constants used across multiple files
 
-# Global variables for cost label
+# Global variables for cost label to display how much the current week or month costs the client
 total_kilowatthours_in_weekly_mode = 0.0
 total_kilowatthours_in_monthly_mode = 0.0
 
@@ -38,10 +38,6 @@ def init(fastApiApp: FastAPI) -> None:
 
     token = '3' #load_dotenv()
     ui.run_with(fastApiApp, storage_secret=token)
-
-
-def set_background(color: str) -> None:
-    ui.query('body').style(f'background-color: {color}')
 
 
 def get_graph_value_per_day(watthours_per_day):
@@ -90,7 +86,7 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
         if len(watthours_array) < 7:
             for i in range(0, 7-len(watthours_array)):
                 watthours_array.append(0)
-                weekly_watthours_array.append(0)
+                weekly_watthours_array.append(0)  #TODO Remove since "if len(weekly_watthours_array) < 4:" 7 lines of code below does the same thing?
                 additional_timestamp = last_timestamp.split('-')[0]+'-'+last_timestamp.split('-')[1]+'-'+str(int(last_timestamp.split('-')[2])+i+1)
                 timestamp_array.append(additional_timestamp)
 

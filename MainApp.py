@@ -121,7 +121,7 @@ def get_radio_button_state(e: str):
         totalCostLabel.set_text(f"The total cost for this {selectedView} is {round(GC.FACTORY_ENERGY_COST * totalEnergy * GC.WORKING_LED_LIGHTS, 2)} USD")
     else:
         totalEnergy = UserInterface.total_kilowatthours_in_monthly_mode
-        totalCostLabel.set_text(f"The total cost for this {selectedView} is {round(GC.FACTORY_ENERGY_COST * totalEnergy * GC.WORKING_LED_LIGHTS * GC.FAKE_SCALE , 2)} USD")
+        totalCostLabel.set_text(f"The total cost for this {selectedView} is {round(GC.FACTORY_ENERGY_COST * totalEnergy * GC.WORKING_LED_LIGHTS, 2)} USD")
 
     graph.set_content(UserInterface.build_svg_graph(db, dateSelected, selectedView))
 
