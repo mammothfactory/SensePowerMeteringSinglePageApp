@@ -31,6 +31,7 @@ total_kilowatthours_in_weekly_mode = 0.0
 total_kilowatthours_in_monthly_mode = 0.0
 
 
+# TODO Use FastAPI for deploy using NGNIX? https://github.com/zauberzeug/nicegui/tree/main/examples/nginx_subpath/
 def init(fastApiApp: FastAPI) -> None:
     @ui.page('init_setting')
     def init_setting():
@@ -40,12 +41,12 @@ def init(fastApiApp: FastAPI) -> None:
     ui.run_with(fastApiApp, storage_secret=token)
 
 
-def get_graph_value_per_day(watthours_per_day):
+def get_graph_value_per_day(watthours_per_day) -> float:
     graph_value_per_day = float(watthours_per_day)/GC.DAILY_WATTHOURS_MAX_IN_GRAPH*GC.Y_PIXELS_HEIGHT_IN_GRAPH
     return graph_value_per_day
 
 
-def get_graph_value_per_week(weekly_watthours_):
+def get_graph_value_per_week(weekly_watthours_) -> float:
     graph_value_per_week = float(weekly_watthours_)/GC.WEEKLY_WATTHOURS_MAX_IN_GRAPH*GC.Y_PIXELS_HEIGHT_IN_GRAPH
     return graph_value_per_week
 
