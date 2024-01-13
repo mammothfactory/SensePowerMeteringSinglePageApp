@@ -19,13 +19,9 @@ __doc__        = "Simple PWA to display the cost of the electrical power measure
 import sys                                              # Determine which OS this code is running on https://docs.python.org/3/library/sys.html
 from datetime import datetime, time, timedelta      	# Manipulate calendar dates & time objects https://docs.python.org/3/library/datetime.html
 import pytz                                             # Sync data write time to database no matter where server is located https://pypi.org/project/pytz/
-from pytz import timezone       
+from pytz import timezone
 
 ## 3rd party libraries
-# A modern, fast (high-performance), web framework for building APIs with Python 3.8+
-# https://fastapi.tiangolo.com
-from fastapi import FastAPI                             # TODO REMOVE? Used to connect to UI to the unoffical Sense API https://github.com/scottbonline/sense
-
 # Browser based GUI framework to build and display a user interface on mobile, PC, and Mac
 # https://nicegui.io/
 from nicegui import app, ui                             # Define highest level app and UI elements
@@ -33,7 +29,7 @@ from nicegui.events import ValueChangeEventArguments    # Catch button, radio bu
 
 # Unofficial API for the Sense Energy Monitor
 # https://github.com/scottbonline/sense
-from sense_energy import Senseable                      # Used to connect to the Sense hardware in factory https://sense.com/sense-home-energy-monitor/                      
+from sense_energy import Senseable                      # Used to connect to the Sense hardware in factory https://sense.com/sense-home-energy-monitor
 
 # Load environment variables for usernames, passwords, & API keys
 # https://pypi.org/project/python-dotenv/
@@ -45,7 +41,6 @@ from Database import Database                           # Store non-Personally I
 import UserInterface                                    # Update the bar graph UI
 
 ## Global Variables
-api = FastAPI()                             # Method for connection to Sense API https://github.com/scottbonline/sense
 sense = Senseable()                         # Object to authenticate and collect realtime trends
 instantPower = 0                            # Instant power (in Watts) being measured by the Sense device
 dailyEnergyUsage = 0                        # Total energy (in kWh) measured by the Sense device so far (12:01 am to function call time)
@@ -53,7 +48,7 @@ currentGuiState = 0                         # State Machine number for the curre
 dateSelected = None                         # Date selcted with left mouse click from the ui.date() calendar element
 totalEnergy = 0                             # Units are kWh
 selectedView = GC.RADIO_BUTTON_VALUES[0]    # State of radio buttons which defines how energy graph is displayed
-canUpdateweeklyReportTable = True           # TODO
+#canUpdateweeklyReportTable = True          # TODO IF Dollar General needs .csv output
 
 
 """TODO If Dollar General needs .csv output instead of just website GUI they could screenshot for their bosses (replace ''' if uncommented)
@@ -67,7 +62,7 @@ def generate_report(db: Database):
     Arg(s):
         db (sqlite): *.db database file
     '''
-    
+
     currentDateObj = db.get_date_time()
     dayOfWeek = currentDateObj.weekday()
     currentTime = currentDateObj.time()
@@ -79,7 +74,7 @@ def generate_report(db: Database):
 
 def search_button_click(db: Database, selectedView: GC):
     """ Toogle the visibility of GUI elements and draw a SVG bar grpah to create the graph page
-    
+
     Arg(s):
         db (Database): SQlite database file containing all the logged (every GC.SENSE_UPDATE_TIME mintues) energy consumption datapoints
         selectedView (GlobalConstants): A value in the GC.RADIO_BUTTON_VALUES list used to determine which graph view to display
@@ -128,10 +123,9 @@ def get_radio_button_state(e: str):
 
 def get_date_selected(e: str):
     """ Store date clicked on the calendar element by the user into a global variable
-    
+
     Arg(s):
         e (String): e.value variable created via the ValueChangeEventArguments Class
-    
     """
     global dateSelected
     dateSelected = e
@@ -166,6 +160,7 @@ def sense_updating(db: Database, mode: str):
 
     db.insert_daily_energy_table(dailyEnergyUsage*1000, GC.FACTORY_ENERGY_COST, currentDate) 
     db.insert_weekly_energy_table(weeklyEnergyUsage*1000, GC.FACTORY_ENERGY_COST, currentDate0)
+
 
 if __name__ in {"__main__", "__mp_main__"}:
     # Force application to run in light mode since calendar color is bad in dark mode
@@ -241,5 +236,5 @@ if __name__ in {"__main__", "__mp_main__"}:
 
     totalCostLabel = ui.label(f"The total cost for this {selectedView} is {GC.FACTORY_ENERGY_COST * totalEnergy * GC.WORKING_LED_LIGHTS} USD").style("color: #001b36; font-size: 300%; font-weight: 300").classes("self-center")
     totalCostLabel.visible = False
-    
+
     ui.run(native=GC.RUN_ON_NATIVE_OS, port=GC.LOCAL_HOST_PORT_FOR_GUI)

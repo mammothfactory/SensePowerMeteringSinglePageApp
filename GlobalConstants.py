@@ -9,9 +9,8 @@ __deprecated__ = False
 __version__    = "0.1.0"
 __doc__        = "CONSTANTS for both LiteHouse and Lustron home configurations"
 """
-FAKE_SCALE = 4          #TODO REMOVE THIS FROM MainApp.py ASAP :)
 
-# Physical equipment at Marianna factory 
+# Physical equipment at Marianna factory
 WORKING_LED_LIGHTS = 154
 BROKEN_LED_LIGHTS  = 8
 OFF_LED_LIGHTS     = 8
@@ -28,6 +27,7 @@ WEEK_NUMBER_COLUMN_NUMBER = 2
 MONTH_NUMBER_COLUMN_NUMBER = 2
 LOG_MESSAGE_COLUMN_NUMBER = 1
 
+
 # Default file location for code
 MAC_CODE_DIRECTORY   = '/Users/venus/GitRepos/SensePowerMeteringSinglePageApp'
 LINUX_CODE_DIRECTORY = '/SensePowerMeteringSinglePageApp'
@@ -43,7 +43,10 @@ DOLLAR_STORE_LOGO_GREEN = '#8EE511'
 MAX_GRAPH_PERCENTAGE = 100                              # Units are in percentage
 RADIO_BUTTON_VALUES = ['WEEK VIEW','MONTH VIEW']
 FACTORY_ENERGY_COST = 0.11                              # Units are US Dollars
-ONE_KILO_PIXELS = 1000.0                                 # Units are 
+Y_PIXELS_HEIGHT_IN_GRAPH = 1000
+DAILY_WATTHOURS_MAX_IN_GRAPH = 7000.0
+WEEKLY_WATTHOURS_MAX_IN_GRAPH = 40000.0
+
 
 # NiceGUI ui.timer() CONSTANTS
 ONE_SECOND = 1                                          # 1 second
@@ -54,6 +57,7 @@ DATABASE_DAILY_REPORT_UPDATE_TIME  = 12 * ONE_HOUR      # 12 hours
 DATABASE_WEEKLY_REPORT_UPDATE_TIME =  4 * ONE_HOUR      # 4 hours
 SENSE_UPDATE_TIME = 1 * ONE_HOUR                        # 1 hour
 UI_UPDATE_TIME = 0.5 * ONE_HOUR                         # 30 minutes
+
 
 # DateTime Object CONSTANTS
 MONDAY = 0

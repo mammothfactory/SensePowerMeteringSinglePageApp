@@ -282,13 +282,11 @@ class Database:
                 return result, isEmpty, isValid
 
         except IndexError:
-            self.insert_debug_logging_table(f'Invalid table row or column number {row} OR {column} respectively was requested')
-            if GC.DEBUG_STATEMENTS_ON: print("INSIDE INDEX ERROR")
+            if GC.DEBUG_STATEMENTS_ON: self.insert_debug_logging_table("INSIDE INDEX ERROR")
             return None, None, False
 
         except sqlite3.OperationalError:
-            self.insert_debug_logging_table(f'The {tableName} table does NOT exist in EnergyReport.db or there is typo in table name')
-            if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
+            if GC.DEBUG_STATEMENTS_ON: self.insert_debug_logging_table(f"INSIDE OPERATIONAL ERROR")
             return None, None, False
 
 
@@ -329,11 +327,11 @@ class Database:
 
 
         except IndexError:
-            if GC.DEBUG_STATEMENTS_ON: print("INSIDE INDEX ERROR")
+            if GC.DEBUG_STATEMENTS_ON: self.insert_debug_logging_table("INSIDE INDEX ERROR")
             return None, None, False
 
         except sqlite3.OperationalError:
-            if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
+            if GC.DEBUG_STATEMENTS_ON: self.insert_debug_logging_table("INSIDE OPERATIONAL ERROR")
             return None, None, False
 
 
@@ -364,7 +362,7 @@ class Database:
         isValid = True
         result = self.cursor.fetchall()[0]
 
-        if GC.DEBUG_STATEMENTS_ON: print("------")
+        if GC.DEBUG_STATEMENTS_ON: print("-------------------------")
         
         if len(result) == 0:
             isEmpty = True
@@ -383,13 +381,11 @@ class Database:
                     return result[row-1][column], isEmpty, isValid
                   
         except IndexError:
-            self.insert_debug_logging_table(f'Invalid table row or column number {row} OR {column} respectively was requested')
-            if GC.DEBUG_STATEMENTS_ON: print("INSIDE INDEX ERROR")
+            if GC.DEBUG_STATEMENTS_ON: self.insert_debug_logging_table("INSIDE INDEX ERROR")
             return None, None, False
         
         except sqlite3.OperationalError:
-            self.insert_debug_logging_table(f'The {tableName} table does NOT exist in EnergyReport.db or there is typo in table name')
-            if GC.DEBUG_STATEMENTS_ON: print(f"INSIDE OPERATIONAL ERROR")
+            if GC.DEBUG_STATEMENTS_ON: self.insert_debug_logging_table(f"INSIDE OPERATIONAL ERROR")
             return None, None, False
 
 
