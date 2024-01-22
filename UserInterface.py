@@ -77,9 +77,16 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
     if GC.DEBUG_STATEMENTS_ON: print(f"Daily wH: {daily_watthours} & Weekly wH: {weekly_watthours}")
 
     watthours_array = [o[1] for o in daily_watthours]
+    daily_graph_values_ = {
+        o[0]:o[1] for o in daily_watthours
+    }
+    daily_graph_values_ = [daily_graph_values_.get(date, 0) for date in daily_graph_x_labels]
+
+    print(daily_graph_values_)
     weekly_watthours_array = [o[0] for o in weekly_watthours]
 
     timestamp_array = [o[0] for o in daily_watthours]
+    print(daily_graph_x_labels)
     last_timestamp = ''
     try:
         last_timestamp = timestamp_array[-1]
@@ -122,13 +129,13 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
                 <title>Weekly Energy Consumption Bar Graph</title>
 
                 <!-- Draw the data points first so that the axis black lines are visible -->
-                <line x1="50"  y1="1000" x2="50"  y2={graph_height-daily_graph_values[0]} stroke="rgb(0,208,243)" stroke-width="100"/>
-                <line x1="150" y1="1000" x2="150" y2={graph_height-daily_graph_values[1]}  stroke="gray" stroke-width="100"/>
-                <line x1="250" y1="1000" x2="250" y2={graph_height-daily_graph_values[2]}  stroke="rgb(0,40,80)" stroke-width="100"/>
-                <line x1="350" y1="1000" x2="350" y2={graph_height-daily_graph_values[3]}  stroke="rgb(53,240,108)" stroke-width="100"/>
-                <line x1="450" y1="1000" x2="450" y2={graph_height-daily_graph_values[4]}  stroke="rgb(0,208,243)" stroke-width="100"/>
-                <line x1="550" y1="1000" x2="550" y2={graph_height-daily_graph_values[5]}  stroke="gray" stroke-width="100"/>
-                <line x1="650" y1="1000" x2="650" y2={graph_height-daily_graph_values[6]}  stroke="rgb(108,240,83)" stroke-width="100"/>
+                <line x1="50"  y1="1000" x2="50"  y2={graph_height-daily_graph_values_[0]} stroke="rgb(0,208,243)" stroke-width="100"/>
+                <line x1="150" y1="1000" x2="150" y2={graph_height-daily_graph_values_[1]}  stroke="gray" stroke-width="100"/>
+                <line x1="250" y1="1000" x2="250" y2={graph_height-daily_graph_values_[2]}  stroke="rgb(0,40,80)" stroke-width="100"/>
+                <line x1="350" y1="1000" x2="350" y2={graph_height-daily_graph_values_[3]}  stroke="rgb(53,240,108)" stroke-width="100"/>
+                <line x1="450" y1="1000" x2="450" y2={graph_height-daily_graph_values_[4]}  stroke="rgb(0,208,243)" stroke-width="100"/>
+                <line x1="550" y1="1000" x2="550" y2={graph_height-daily_graph_values_[5]}  stroke="gray" stroke-width="100"/>
+                <line x1="650" y1="1000" x2="650" y2={graph_height-daily_graph_values_[6]}  stroke="rgb(108,240,83)" stroke-width="100"/>
 
                 <!-- X-Axis Labels -->
                 <text x="50"  y="1050" text-anchor="middle">{daily_graph_x_labels[0]}</text>
