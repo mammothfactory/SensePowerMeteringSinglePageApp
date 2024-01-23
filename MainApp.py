@@ -161,7 +161,7 @@ def sense_updating(db: Database, mode: str):
     db.insert_daily_energy_table(dailyEnergyUsage*1000, GC.FACTORY_ENERGY_COST, currentDate) 
     db.insert_weekly_energy_table(weeklyEnergyUsage*1000, GC.FACTORY_ENERGY_COST, currentDate0)
 
-
+# TODO Switch to using routers for real Single Page App instead of visibility changes in UI elements https://github.com/zauberzeug/nicegui/blob/main/examples/single_page_app/main.py
 if __name__ in {"__main__", "__mp_main__"}:
     # Force application to run in light mode since calendar color is bad in dark mode
     darkMode = ui.dark_mode()

@@ -31,6 +31,7 @@ total_kilowatthours_in_weekly_mode = 0.0
 total_kilowatthours_in_monthly_mode = 0.0
 
 
+# TODO Use FastAPI for deploy using NGNIX? https://github.com/zauberzeug/nicegui/tree/main/examples/nginx_subpath/
 def init(fastApiApp: FastAPI) -> None:
     @ui.page('init_setting')
     def init_setting():
@@ -40,12 +41,12 @@ def init(fastApiApp: FastAPI) -> None:
     ui.run_with(fastApiApp, storage_secret=token)
 
 
-def get_graph_value_per_day(watthours_per_day):
+def get_graph_value_per_day(watthours_per_day) -> float:
     graph_value_per_day = float(watthours_per_day)/GC.DAILY_WATTHOURS_MAX_IN_GRAPH*GC.Y_PIXELS_HEIGHT_IN_GRAPH
     return graph_value_per_day
 
 
-def get_graph_value_per_week(weekly_watthours_):
+def get_graph_value_per_week(weekly_watthours_) -> float:
     graph_value_per_week = float(weekly_watthours_)/GC.WEEKLY_WATTHOURS_MAX_IN_GRAPH*GC.Y_PIXELS_HEIGHT_IN_GRAPH
     return graph_value_per_week
 
@@ -61,18 +62,31 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
     """
     daily_graph_values = []
     weekly_graph_values = []
+    daily_graph_x_labels = []
 
     selected_week_number = datetime.strptime(selectedDate, '%Y-%m-%d').isocalendar()[1]
-    selected_date = datetime.fromisoformat(selectedDate).strftime('%Y-%m-%d').replace("-0", "-")
+    selected_date = selectedDate.replace("-0", "-")
+    daily_graph_x_labels.append(selected_date)
+
+    for i in range(1,7):
+        temp_x_label = str(datetime.strptime(selectedDate, '%Y-%m-%d') + timedelta(i)).replace("-0", "-").split(' ')[0]
+        daily_graph_x_labels.append(temp_x_label)
 
     daily_watthours = db.get_daily_watthours(selected_date)[0]
     weekly_watthours = db.get_weekly_watthours(selected_week_number)[0]
     if GC.DEBUG_STATEMENTS_ON: print(f"Daily wH: {daily_watthours} & Weekly wH: {weekly_watthours}")
 
     watthours_array = [o[1] for o in daily_watthours]
+    daily_graph_values_ = {
+        o[0]:o[1] for o in daily_watthours
+    }
+    daily_graph_values_ = [daily_graph_values_.get(date, 0) for date in daily_graph_x_labels]
+
+    print(daily_graph_values_)
     weekly_watthours_array = [o[0] for o in weekly_watthours]
 
     timestamp_array = [o[0] for o in daily_watthours]
+    print(daily_graph_x_labels)
     last_timestamp = ''
     try:
         last_timestamp = timestamp_array[-1]
@@ -115,22 +129,22 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
                 <title>Weekly Energy Consumption Bar Graph</title>
 
                 <!-- Draw the data points first so that the axis black lines are visible -->
-                <line x1="50"  y1="1000" x2="50"  y2={graph_height-daily_graph_values[0]} stroke="grey" stroke-width="100"/>
-                <line x1="150" y1="1000" x2="150" y2={graph_height-daily_graph_values[1]}  stroke="green" stroke-width="100"/>
-                <line x1="250" y1="1000" x2="250" y2={graph_height-daily_graph_values[2]}  stroke="blue" stroke-width="100"/>
-                <line x1="350" y1="1000" x2="350" y2={graph_height-daily_graph_values[3]}  stroke="black" stroke-width="100"/>
-                <line x1="450" y1="1000" x2="450" y2={graph_height-daily_graph_values[4]}  stroke="yellow" stroke-width="100"/>
-                <line x1="550" y1="1000" x2="550" y2={graph_height-daily_graph_values[5]}  stroke="green" stroke-width="100"/>
-                <line x1="650" y1="1000" x2="650" y2={graph_height-daily_graph_values[6]}  stroke="orange" stroke-width="100"/>
+                <line x1="50"  y1="1000" x2="50"  y2={graph_height-daily_graph_values_[0]} stroke="rgb(0,208,243)" stroke-width="100"/>
+                <line x1="150" y1="1000" x2="150" y2={graph_height-daily_graph_values_[1]}  stroke="gray" stroke-width="100"/>
+                <line x1="250" y1="1000" x2="250" y2={graph_height-daily_graph_values_[2]}  stroke="rgb(0,40,80)" stroke-width="100"/>
+                <line x1="350" y1="1000" x2="350" y2={graph_height-daily_graph_values_[3]}  stroke="rgb(53,240,108)" stroke-width="100"/>
+                <line x1="450" y1="1000" x2="450" y2={graph_height-daily_graph_values_[4]}  stroke="rgb(0,208,243)" stroke-width="100"/>
+                <line x1="550" y1="1000" x2="550" y2={graph_height-daily_graph_values_[5]}  stroke="gray" stroke-width="100"/>
+                <line x1="650" y1="1000" x2="650" y2={graph_height-daily_graph_values_[6]}  stroke="rgb(108,240,83)" stroke-width="100"/>
 
                 <!-- X-Axis Labels -->
-                <text x="50"  y="1050" text-anchor="middle">{timestamp_array[0]}</text>
-                <text x="150" y="1050" text-anchor="middle">{timestamp_array[1]}</text>
-                <text x="250" y="1050" text-anchor="middle">{timestamp_array[2]}</text>
-                <text x="350" y="1050" text-anchor="middle">{timestamp_array[3]}</text>
-                <text x="450" y="1050" text-anchor="middle">{timestamp_array[4]}</text>
-                <text x="550" y="1050" text-anchor="middle">{timestamp_array[5]}</text>
-                <text x="650" y="1050" text-anchor="middle">{timestamp_array[6]}</text>
+                <text x="50"  y="1050" text-anchor="middle">{daily_graph_x_labels[0]}</text>
+                <text x="150" y="1050" text-anchor="middle">{daily_graph_x_labels[1]}</text>
+                <text x="250" y="1050" text-anchor="middle">{daily_graph_x_labels[2]}</text>
+                <text x="350" y="1050" text-anchor="middle">{daily_graph_x_labels[3]}</text>
+                <text x="450" y="1050" text-anchor="middle">{daily_graph_x_labels[4]}</text>
+                <text x="550" y="1050" text-anchor="middle">{daily_graph_x_labels[5]}</text>
+                <text x="650" y="1050" text-anchor="middle">{daily_graph_x_labels[6]}</text>
 
                 <!-- Y-Axis Labels TODO CHECK MULTIPLYING TEXT BY 154 = GC.WORKING_LED_LIGHTS IS VALID??? -->
                 <text x="-10" y="0"       text-anchor="end">1078 kWh</text>
@@ -157,12 +171,12 @@ def build_svg_graph(db: Database, selectedDate: str, selectedView: GC) -> str:
                 <title>Monthly Energy Consumption Bar Graph</title>
 
                 <!-- Draw the data points first so that the axis black lines are visible -->
-                <line x1="50"  y1="1000" x2="50"  y2={graph_height-SHOW_NO_DATA}           stroke="grey"   stroke-width="100"/>
-                <line x1="150" y1="1000" x2="150" y2={graph_height-weekly_graph_values[0]} stroke="green"  stroke-width="100"/>
-                <line x1="250" y1="1000" x2="250" y2={graph_height-weekly_graph_values[1]} stroke="blue"   stroke-width="100"/>
-                <line x1="350" y1="1000" x2="350" y2={graph_height-SHOW_NO_DATA}           stroke="black"  stroke-width="100"/>
-                <line x1="450" y1="1000" x2="450" y2={graph_height-weekly_graph_values[2]} stroke="yellow" stroke-width="100"/>
-                <line x1="550" y1="1000" x2="550" y2={graph_height-weekly_graph_values[3]} stroke="green"  stroke-width="100"/>
+                <line x1="50"  y1="1000" x2="50"  y2={graph_height-SHOW_NO_DATA}           stroke="rgb(0,208,243)"   stroke-width="100"/>
+                <line x1="150" y1="1000" x2="150" y2={graph_height-weekly_graph_values[0]} stroke="rgb(0,208,243)"  stroke-width="100"/>
+                <line x1="250" y1="1000" x2="250" y2={graph_height-weekly_graph_values[1]} stroke="gray"   stroke-width="100"/>
+                <line x1="350" y1="1000" x2="350" y2={graph_height-SHOW_NO_DATA}           stroke="rgb(0,40,80)"  stroke-width="100"/>
+                <line x1="450" y1="1000" x2="450" y2={graph_height-weekly_graph_values[2]} stroke="rgb(108,240,83)" stroke-width="100"/>
+                <line x1="550" y1="1000" x2="550" y2={graph_height-weekly_graph_values[3]} stroke="rgb(53,240,108)"  stroke-width="100"/>
                 <line x1="650" y1="1000" x2="650" y2={graph_height-SHOW_NO_DATA}           stroke="orange" stroke-width="100"/>
 
                 <!-- X-Axis Labels with 50, 350, and 650 left blank on purpose to center data -->

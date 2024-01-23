@@ -33,23 +33,18 @@ import GlobalConstants as GC
 
 class Database:
 
-    DEBUGGING = True
     WEEKLY = "WEEKLY"
     MONTHLY = "MONTHLY"
 
     """ Store non-Personally Identifiable Information in SQLite database
     """
 
-    def __init__(self): #TODO REMOVE???, pollingRate: int=0.0166666666):
+    def __init__(self):
         """ Constructor to initialize an Database object
-
-        Args:
-            pollingRate (int): Frequency (in Hz) to collect data for the DailyEnergyTable SQlite database. Defaults to 1/60 Hz = 1 time per minute
         """
         # Connect to the database (create if it doesn't exist)
         self.conn = sqlite3.connect('EnergyReport.db')
         self.cursor = self.conn.cursor()
-        # TODO REMOVE I DONT THINK I USED THIS self.pollingRate = pollingRate     # In units of Hz
 
         # Create six tables in EnergyReport.db for collecting energy data
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS DailyEnergyTable   (id INTEGER PRIMARY KEY, totalDailyWattHours INTEGER, currentCostPerWh REAL, timestamp TEXT)''')
@@ -114,28 +109,30 @@ class Database:
         now = datetime.now(tz)
         if now.dst() == timedelta(0):
             now = datetime.now(zulu) - timedelta(hours=6)
-            #print('Standard Time')
+            if GC.DEBUG_STATEMENTS_ON: print('Standard Time')
 
         else:
             now = datetime.now(zulu) - timedelta(hours=5)
-            #print('Daylight Savings')
+            if GC.DEBUG_STATEMENTS_ON: print('Daylight Savings')
 
         return now
 
 
     def insert_daily_energy_table(self, energy: int, cost: float, date: str) -> int:
-        """ Insert total daily energy used (in Wh), energy cost (in US Dollars), and DATE of database operation into the DailyEnergyTable if DATE is unqiue, otherwise update total daily energy used
+        """ Insert or update the DailyEnergyTable SQLite table with data Sense energy sensor collected
 
         Args:
-            energy (int): ??? (e.g. 2400 Wh)
-            cost (str): ???? (e.g. $0.11)
-            datetime (str): ???? (e.g. 2024-01-01)
+            energy (int): Amount of energy used rounded to nearest interger (e.g 2.4 kWh)
+            cost (float): Cost of the energy tracked in USD per kWh (e.g. $0.11/kWh)
+            date (str): Timestamp in ISO8601 format for the date energy was used (e.g 2024-01-01)
+
+        Returns:
+            int: Database index id of last row inserted
         """
         lastDatabaseIndexInserted = -1
-        #if GC.DEBUG_STATEMENTS_ON: print(f"DATE TO QUERY IS: {date}")
 
         results, isEmpty, isValid = self.get_daily_watthours(date)
-        #if GC.DEBUG_STATEMENTS_ON: print(f"Tuple returned was: {(results, isEmpty, isValid)}")
+        if GC.DEBUG_STATEMENTS_ON: print(f"Tuple returned was: {(results, isEmpty, isValid)}")
         
         try:
             if(results):
@@ -147,11 +144,7 @@ class Database:
         except TypeError:
             # self.cursor.execute("INSERT INTO DailyEnergyTable (totalDailyWattHours, currentCostPerWh, timestamp) VALUES (?, ?, ?)", (energy, cost, date))
             print("Error occured while inserting data...")
-        # try:
-        #     self.cursor.execute("INSERT INTO DailyEnergyTable (totalDailyWattHours, currentCostPerWh, timestamp) VALUES (?, ?, ?)", (energy, cost, date))
-        # except e:
-        #     print(e)
-        #     return lastDatabaseIndexInserted
+
         lastDatabaseIndexInserted = self.cursor.lastrowid
 
         self.commit_changes()   
@@ -160,13 +153,22 @@ class Database:
 
 
     def insert_weekly_energy_table(self, energy: int, cost: float, date: str) -> int:
+        """ Insert or update the WeeklyEnergyTable SQLite table with data Sense energy sensor collected
+
+        Args:
+            energy (int): Amount of energy used rounded to nearest interger (e.g 2.4 kWh)
+            cost (float): Cost of the energy tracked in USD per kWh (e.g. $0.11/kWh)
+            date (str): Timestamp in ISO8601 format for the date energy was used (e.g 2024-01-01)
+
+        Returns:
+            int: Database index id of last row inserted
+        """
         current_week_number = datetime.strptime(date, '%Y-%m-%d').isocalendar()[1]
 
         lastDatabaseIndexInserted = -1
-        #if GC.DEBUG_STATEMENTS_ON: print(f"DATE TO QUERY IS: {date}")
 
         results, isEmpty, isValid = self.get_weekly_watthours(current_week_number)
-        #if GC.DEBUG_STATEMENTS_ON: print(f"Tuple returned was: {(results, isEmpty, isValid)}")
+        if GC.DEBUG_STATEMENTS_ON: print(f"Tuple returned was: {(results, isEmpty, isValid)}")
         try:
             if(results):
                 weekNumberToUpdate = results[0][1]
@@ -176,12 +178,8 @@ class Database:
 
         except TypeError:
             # self.cursor.execute("INSERT INTO DailyEnergyTable (totalDailyWattHours, currentCostPerWh, timestamp) VALUES (?, ?, ?)", (energy, cost, date))
-            print("Error occured while inserting data...")
-        # try:
-        #     self.cursor.execute("INSERT INTO DailyEnergyTable (totalDailyWattHours, currentCostPerWh, timestamp) VALUES (?, ?, ?)", (energy, cost, date))
-        # except e:
-        #     print(e)
-        #     return lastDatabaseIndexInserted
+            self.insert_debug_logging_table("Error occured while inserting data...")
+
         lastDatabaseIndexInserted = self.cursor.lastrowid
 
         self.commit_changes()
@@ -195,41 +193,6 @@ class Database:
         return databaseIndexInserted
 
 
-    def insert_check_in_table(self, id: int) -> tuple:
-        """ Insert date and time (to current mintue) into CheckInTable of database
-            https://en.wikipedia.org/wiki/ISO_8601
-
-        Args:
-            id (int): Employee ID (from 1 to 9999) linked to internal email (e.g. 9000@mammothfactory.co)
-        """
-        data = self.query_table("CheckInTable")
-        result = list(filter(lambda t: t[GC.EMPLOYEE_ID_COLUMN_NUMBER] == id, data))
-        if GC.DEBUG_STATEMENTS_ON:  print(f'EMPLOYEE ID FILTER: {result}')
-
-        isoString = '?'
-        currentDateTime = self.get_date_time().isoformat(timespec="minutes")
-
-        try:
-            storedIsoString = result[0][GC.TIMESTAMP_COLUMN_NUMBER]
-            if GC.DEBUG_STATEMENTS_ON:  print(f'ISO DateTime: {storedIsoString}')
-
-        except IndexError:
-            if GC.DEBUG_STATEMENTS_ON: print(f'INSERTING {id} since this employee ID has NOT clocked IN TODAY')
-            self.cursor.execute("INSERT INTO CheckInTable (employeeId, timestamp) VALUES (?, ?)", (id, currentDateTime))
-            self.commit_changes()
-            return '',''
-
-        finally:
-            nameResults= []
-            nameResults = self.search_users_table(str(id))
-            if len(nameResults) > 0:
-                englishError = f'{nameResults[0][GC.FIRST_NAME_COLUMN_NUMBER]} {nameResults[0][GC.LAST_NAME_COLUMN_NUMBER]} you already clocked in today'
-                spanishError = f'{nameResults[0][GC.FIRST_NAME_COLUMN_NUMBER]} {nameResults[0][GC.LAST_NAME_COLUMN_NUMBER]} ya has fichado hoy'
-                return englishError, spanishError
-            else:
-                return '',''
-
-
     def insert_debug_logging_table(self, debugText: str):
         """ Insert debugging text in database for later review
 
@@ -238,6 +201,7 @@ class Database:
         """
         self.cursor.execute("INSERT INTO DebugLoggingTable (logMessage) VALUES (?)", (debugText,))
         self.commit_changes()
+
 
     def get_daily_watthours(self, start_date):
         isEmpty = False
